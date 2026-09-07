@@ -1691,10 +1691,6 @@ result = test_script_3()
 # ============================================================
 
 def insert_to_supabase(rows):
-    """
-    Deletes all existing TblTaxCalendar rows
-    then inserts fresh data using Supabase REST API
-    """
     load_dotenv()
 
     SUPABASE_URL = os.environ.get("SUPABASE_URL")
@@ -1702,7 +1698,6 @@ def insert_to_supabase(rows):
 
     if not SUPABASE_URL or not SUPABASE_KEY:
         print("\n❌ SUPABASE_URL or SUPABASE_SERVICE_KEY not found")
-        print("   Make sure .env file exists with both values set")
         return False
 
     headers = {
@@ -1712,11 +1707,17 @@ def insert_to_supabase(rows):
         "Prefer": "return=minimal"
     }
 
+    def to_date(val):
+        if val is None:
+            return None
+        if isinstance(val, date):
+            return val.isoformat()
+        return str(val)
+
     try:
         print("\n🔌 Connecting to Supabase via REST API...")
-
-        # Step 1 — Delete all existing rows
         print("🗑️  Deleting existing TblTaxCalendar rows...")
+
         delete_response = requests.delete(
             f"{SUPABASE_URL}/rest/v1/TblTaxCalendar",
             headers={**headers, "Prefer": "return=representation"},
@@ -1727,44 +1728,36 @@ def insert_to_supabase(rows):
             print(f"❌ Delete failed: {delete_response.status_code} {delete_response.text}")
             return False
 
-        print(f"✅ Existing rows deleted")
-
-        # Step 2 — Insert all new rows in batches of 500
-        def to_date(val):
-            if val is None:
-                return None
-            if isinstance(val, date):
-                return val.isoformat()
-            return str(val)
-
+        print("✅ Existing rows deleted")
         print(f"\n📥 Inserting {len(rows)} new rows...")
-        inserted = 0
-        errors   = 0
+
+        inserted  = 0
+        errors    = 0
         batch_size = 500
 
         for i in range(0, len(rows), batch_size):
-            batch = rows[i:i + batch_size]
-
+            batch   = rows[i:i + batch_size]
             payload = []
+
             for row in batch:
                 payload.append({
-                    "FYE":              to_date(row.get("FYE")),
-                    "TaxYear":          row.get("TaxYear"),
-                    "FormType":         row.get("FormType"),
-                    "EntityType":       row.get("EntityType"),
-                    "Jurisdiction":     row.get("Country"),
-                    "StateProvince":    row.get("State/Province"),
-                    "HolidayLocation":  row.get("HolidayLocation"),
-                    "HolidayEligible":  row.get("HolidayEligible", "No"),
-                    "DisasterName":     row.get("DisasterName"),
-                    "DisasterEligible": row.get("DisasterEligible", "No"),
-                    "DisasterLocation": row.get("DisasterLocation"),
-                    "DisasterCounties": row.get("DisasterCounties"),
-                    "DisasterDeadline": to_date(row.get("DisasterDeadline")),
-                    "OriginalDeadline": to_date(row.get("OriginalDeadline")),
-                    "ExtensionDeadline":to_date(row.get("ExtensionDeadline")),
-                    "SourceType":       row.get("SourceType"),
-                    "SourceURL":        row.get("SourceURL"),
+                    "FYE":               to_date(row.get("FYE")),
+                    "TaxYear":           row.get("TaxYear"),
+                    "FormType":          row.get("FormType"),
+                    "EntityType":        row.get("EntityType"),
+                    "Jurisdiction":      row.get("Country"),
+                    "StateProvince":     row.get("State/Province"),
+                    "HolidayLocation":   row.get("HolidayLocation"),
+                    "HolidayEligible":   row.get("HolidayEligible", "No"),
+                    "DisasterName":      row.get("DisasterName"),
+                    "DisasterEligible":  row.get("DisasterEligible", "No"),
+                    "DisasterLocation":  row.get("DisasterLocation"),
+                    "DisasterCounties":  row.get("DisasterCounties"),
+                    "DisasterDeadline":  to_date(row.get("DisasterDeadline")),
+                    "OriginalDeadline":  to_date(row.get("OriginalDeadline")),
+                    "ExtensionDeadline": to_date(row.get("ExtensionDeadline")),
+                    "SourceType":        row.get("SourceType"),
+                    "SourceURL":         row.get("SourceURL"),
                 })
 
             insert_response = requests.post(
@@ -1790,3 +1783,13 @@ def insert_to_supabase(rows):
     except Exception as e:
         print(f"\n❌ Error: {e}")
         return False
+
+
+if result:
+    print(f"\n{'='*60}")
+    print(f"STARTING DATABASE INSERT")
+    print(f"{'='*60}")
+    print(f"Total rows to insert: {len(result)}")
+    insert_to_supabase(result)
+else:
+    print("❌ No results generated — skipping database insert")

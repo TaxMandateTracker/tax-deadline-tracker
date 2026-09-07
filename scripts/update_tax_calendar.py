@@ -48,6 +48,9 @@ else:
     # Default to current year
     YEAR_INPUT = datetime.now().year
 
+print(f"DEBUG: TAX_YEAR env = {os.environ.get('TAX_YEAR')}")
+print(f"DEBUG: YEAR_INPUT = {YEAR_INPUT}")
+
 
 # ============================================================
 # IRS / CRA URLS

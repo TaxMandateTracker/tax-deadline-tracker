@@ -1693,128 +1693,100 @@ result = test_script_3()
 def insert_to_supabase(rows):
     """
     Deletes all existing TblTaxCalendar rows
-    then inserts fresh data from script results
+    then inserts fresh data using Supabase REST API
     """
     load_dotenv()
 
-    DATABASE_URL = os.environ.get("DATABASE_URL")
+    SUPABASE_URL = os.environ.get("SUPABASE_URL")
+    SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_KEY")
 
-    if not DATABASE_URL:
-        print("\n❌ DATABASE_URL not found in environment variables")
-        print("   Make sure .env file exists with DATABASE_URL set")
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        print("\n❌ SUPABASE_URL or SUPABASE_SERVICE_KEY not found")
+        print("   Make sure .env file exists with both values set")
         return False
 
-    conn = None
+    headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": f"Bearer {SUPABASE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal"
+    }
+
     try:
-        print("\n🔌 Connecting to Supabase database...")
-        conn = psycopg2.connect(DATABASE_URL)
-        cursor = conn.cursor()
-        print("✅ Connected successfully")
+        print("\n🔌 Connecting to Supabase via REST API...")
 
         # Step 1 — Delete all existing rows
-        print("\n🗑️  Deleting existing TblTaxCalendar rows...")
-        cursor.execute('DELETE FROM "TblTaxCalendar"')
-        deleted = cursor.rowcount
-        print(f"✅ Deleted {deleted} existing rows")
+        print("🗑️  Deleting existing TblTaxCalendar rows...")
+        delete_response = requests.delete(
+            f"{SUPABASE_URL}/rest/v1/TblTaxCalendar",
+            headers={**headers, "Prefer": "return=representation"},
+            params={"CalendarID": "gte.0"}
+        )
 
-        # Step 2 — Insert all new rows
+        if delete_response.status_code not in [200, 204]:
+            print(f"❌ Delete failed: {delete_response.status_code} {delete_response.text}")
+            return False
+
+        print(f"✅ Existing rows deleted")
+
+        # Step 2 — Insert all new rows in batches of 500
+        def to_date(val):
+            if val is None:
+                return None
+            if isinstance(val, date):
+                return val.isoformat()
+            return str(val)
+
         print(f"\n📥 Inserting {len(rows)} new rows...")
         inserted = 0
         errors   = 0
+        batch_size = 500
 
-        for row in rows:
-            try:
-                # Convert date objects to strings for PostgreSQL
-                def to_date(val):
-                    if val is None:
-                        return None
-                    if isinstance(val, date):
-                        return val.isoformat()
-                    return str(val)
+        for i in range(0, len(rows), batch_size):
+            batch = rows[i:i + batch_size]
 
-                cursor.execute("""
-                    INSERT INTO "TblTaxCalendar" (
-                        "FYE",
-                        "TaxYear",
-                        "FormType",
-                        "EntityType",
-                        "Jurisdiction",
-                        "StateProvince",
-                        "HolidayLocation",
-                        "HolidayEligible",
-                        "DisasterName",
-                        "DisasterEligible",
-                        "DisasterLocation",
-                        "DisasterCounties",
-                        "DisasterDeadline",
-                        "OriginalDeadline",
-                        "ExtensionDeadline",
-                        "SourceType",
-                        "SourceURL"
-                    ) VALUES (
-                        %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s,
-                        %s, %s, %s, %s, %s,
-                        %s, %s
-                    )
-                """, (
-                    to_date(row.get("FYE")),
-                    row.get("TaxYear"),
-                    row.get("FormType"),
-                    row.get("EntityType"),
-                    row.get("Country"),           # Country → Jurisdiction
-                    row.get("State/Province"),     # State/Province → StateProvince
-                    row.get("HolidayLocation"),
-                    row.get("HolidayEligible", "No"),
-                    row.get("DisasterName"),
-                    row.get("DisasterEligible", "No"),
-                    row.get("DisasterLocation"),
-                    row.get("DisasterCounties"),
-                    to_date(row.get("DisasterDeadline")),
-                    to_date(row.get("OriginalDeadline")),
-                    to_date(row.get("ExtensionDeadline")),
-                    row.get("SourceType"),
-                    row.get("SourceURL"),
-                ))
-                inserted += 1
+            payload = []
+            for row in batch:
+                payload.append({
+                    "FYE":              to_date(row.get("FYE")),
+                    "TaxYear":          row.get("TaxYear"),
+                    "FormType":         row.get("FormType"),
+                    "EntityType":       row.get("EntityType"),
+                    "Jurisdiction":     row.get("Country"),
+                    "StateProvince":    row.get("State/Province"),
+                    "HolidayLocation":  row.get("HolidayLocation"),
+                    "HolidayEligible":  row.get("HolidayEligible", "No"),
+                    "DisasterName":     row.get("DisasterName"),
+                    "DisasterEligible": row.get("DisasterEligible", "No"),
+                    "DisasterLocation": row.get("DisasterLocation"),
+                    "DisasterCounties": row.get("DisasterCounties"),
+                    "DisasterDeadline": to_date(row.get("DisasterDeadline")),
+                    "OriginalDeadline": to_date(row.get("OriginalDeadline")),
+                    "ExtensionDeadline":to_date(row.get("ExtensionDeadline")),
+                    "SourceType":       row.get("SourceType"),
+                    "SourceURL":        row.get("SourceURL"),
+                })
 
-            except Exception as row_error:
-                errors += 1
-                print(f"⚠️  Row error: {row_error}")
-                continue
+            insert_response = requests.post(
+                f"{SUPABASE_URL}/rest/v1/TblTaxCalendar",
+                headers=headers,
+                json=payload
+            )
 
-        # Step 3 — Commit
-        conn.commit()
+            if insert_response.status_code in [200, 201]:
+                inserted += len(batch)
+                print(f"   ✅ Batch {i//batch_size + 1}: {len(batch)} rows inserted")
+            else:
+                errors += len(batch)
+                print(f"   ❌ Batch {i//batch_size + 1} failed: {insert_response.status_code} {insert_response.text[:200]}")
+
         print(f"\n✅ Insert complete:")
         print(f"   Inserted: {inserted} rows")
         print(f"   Errors:   {errors} rows")
         print(f"   Total:    {len(rows)} rows")
         print(f"   Time:     {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-
-        cursor.close()
         return True
 
     except Exception as e:
-        print(f"\n❌ Database connection error: {e}")
-        if conn:
-            conn.rollback()
+        print(f"\n❌ Error: {e}")
         return False
-
-    finally:
-        if conn:
-            conn.close()
-            print("🔌 Database connection closed")
-
-
-# ============================================================
-# RUN INSERT
-# ============================================================
-
-if result:
-    print(f"\n{'='*60}")
-    print(f"STARTING DATABASE INSERT")
-    print(f"{'='*60}")
-    print(f"Total rows to insert: {len(result)}")
-    insert_to_supabase(result)
-else:
-    print("❌ No results generated — skipping database insert")

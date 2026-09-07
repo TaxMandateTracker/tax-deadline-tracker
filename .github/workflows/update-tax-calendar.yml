@@ -9,9 +9,9 @@ on:
   workflow_dispatch:
     inputs:
       year:
-        description: 'Tax year to process (e.g. 2026)'
+        description: 'Tax year to process (leave empty for current year)'
         required: false
-        default: '2026'
+        default: ''
 
 jobs:
   update-calendar:

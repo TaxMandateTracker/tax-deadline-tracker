@@ -26,7 +26,6 @@ export async function GET(request: Request) {
         { OriginalDeadline: "asc" },
         { FormType: "asc" },
       ],
-      take: 1000,
     })
 
     return NextResponse.json(records)

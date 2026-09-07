@@ -15,16 +15,8 @@ export default function TopNav({ email }: Props) {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const router = useRouter()
 
-  const allNavLinks = [
-    { href: "/planning", label: "Planning", roles: ["Partner", "IT Admin", "Manager", "Senior", "Associate", "Junior"] },
-    { href: "/time-and-expenses", label: "Time & Expenses", roles: ["Partner", "IT Admin", "Manager", "Senior", "Associate", "Junior"] },
-    { href: "/tasks", label: "Tasks", roles: ["Partner", "IT Admin", "Manager", "Senior", "Associate", "Junior"] },
-    { href: "/projects", label: "Projects", roles: ["Partner", "IT Admin", "Manager", "Senior"] },
-    { href: "/clients", label: "Clients", roles: ["Partner", "IT Admin", "Manager", "Senior"] },
-    { href: "/resources", label: "Resources", roles: ["Partner", "IT Admin", "Manager"] },
-    { href: "/imports", label: "Imports", roles: ["Partner", "IT Admin", "Manager"] },
-    { href: "/exports", label: "Exports", roles: ["Partner", "IT Admin", "Manager"] },
-    { href: "/templates", label: "Templates", roles: ["Partner", "IT Admin", "Manager"] },
+    const allNavLinks = [
+    { href: "/tax-calendar", label: "Tax Calendar", roles: ["Partner", "IT Admin", "Manager", "Senior", "Associate", "Junior"] },
   ]
 
   const userRole = currentUser?.role ?? "Associate"
@@ -33,47 +25,19 @@ export default function TopNav({ email }: Props) {
     link.roles.includes(userRole) || currentUser?.isOwner
   )
 
-  const ADD_MENU_ITEMS = [
+    const ADD_MENU_ITEMS = [
     {
-      label: "New engagement",
-      description: "Create a new client engagement",
-      icon: "📋",
-      href: "/projects",
-      roles: ["Partner", "IT Admin", "Manager", "Senior"],
-    },
-    {
-      label: "New task",
-      description: "Add a task to an engagement",
-      icon: "✅",
-      href: "/tasks",
-      roles: ["Partner", "IT Admin", "Manager", "Senior", "Associate", "Junior"],
-    },
-    {
-      label: "New client",
-      description: "Add a new client to the firm",
-      icon: "🏢",
-      href: "/clients",
+      label: "Import data",
+      description: "Import staff, clients or mandates from Excel",
+      icon: "📥",
+      href: "/imports",
       roles: ["Partner", "IT Admin", "Manager"],
     },
     {
-      label: "Add staff",
-      description: "Add a new staff member",
-      icon: "👤",
-      href: "/resources",
-      roles: ["Partner", "IT Admin", "Manager"],
-    },
-    {
-      label: "Log time",
-      description: "Log hours for this week",
-      icon: "⏱",
-      href: "/time-and-expenses",
-      roles: ["Partner", "IT Admin", "Manager", "Senior", "Associate", "Junior"],
-    },
-    {
-      label: "New template",
-      description: "Create an engagement template",
-      icon: "📄",
-      href: "/templates",
+      label: "Export data",
+      description: "Export data to CSV or Excel",
+      icon: "📤",
+      href: "/exports",
       roles: ["Partner", "IT Admin", "Manager"],
     },
   ]

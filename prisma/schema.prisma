@@ -1,0 +1,331 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────
+// TblStaff
+// ─────────────────────────────────────────
+model TblStaff {
+  StaffID        Int       @id @default(autoincrement())
+  FirstName      String
+  LastName       String
+  Email          String    @unique
+  Role           String
+  Team           String?
+  UnitsSunday    Decimal   @default(0)
+  UnitsMonday    Decimal   @default(8)
+  UnitsTuesday   Decimal   @default(8)
+  UnitsWednesday Decimal   @default(8)
+  UnitsThursday  Decimal   @default(8)
+  UnitsFriday    Decimal   @default(8)
+  UnitsSaturday  Decimal   @default(0)
+  IsActive       Boolean   @default(true)
+  CreatedDate    DateTime  @default(now())
+
+  // Relations
+  ClientsCreated      TblClient[]          @relation("ClientCreatedBy")
+  JobsCreated         TblJob[]             @relation("JobCreatedBy")
+  AssignedJobs        TblJob[]             @relation("JobAssignedStaff")
+  AssistingJobs       TblJob[]             @relation("JobAssistingStaff")
+  AuditChangedBy      TblDueDateAuditTrail[] @relation("AuditChangedBy")
+  AuditApprovedBy     TblDueDateAuditTrail[] @relation("AuditApprovedBy")
+  AuditCreatedBy      TblDueDateAuditTrail[] @relation("AuditCreatedBy")
+  AuditDeletedBy      TblDueDateAuditTrail[] @relation("AuditDeletedBy")
+  Alerts              TblAlert[]           @relation("AlertStaff")
+  AlertsActionBy      TblAlert[]           @relation("AlertActionBy")
+  Partner             TblPartner?
+  Manager             TblManager?
+  CustomColumnsCreated TblAppAdmin[]       @relation("AdminCreatedBy")
+
+  @@map("TblStaff")
+}
+
+// ─────────────────────────────────────────
+// TblPartner
+// ─────────────────────────────────────────
+model TblPartner {
+  PartnerID   Int      @id @default(autoincrement())
+  StaffID     Int      @unique
+  PartnerName String
+  Email       String
+  IsActive    Boolean  @default(true)
+
+  // Relations
+  Staff              TblStaff @relation(fields: [StaffID], references: [StaffID])
+  ClientPartnerJobs  TblJob[] @relation("JobClientPartner")
+  MandatePartnerJobs TblJob[] @relation("JobMandatePartner")
+
+  @@map("TblPartner")
+}
+
+// ─────────────────────────────────────────
+// TblManager
+// ─────────────────────────────────────────
+model TblManager {
+  ManagerID   Int      @id @default(autoincrement())
+  StaffID     Int      @unique
+  ManagerName String
+  Email       String
+  IsActive    Boolean  @default(true)
+
+  // Relations
+  Staff TblStaff @relation(fields: [StaffID], references: [StaffID])
+  Jobs  TblJob[]
+
+  @@map("TblManager")
+}
+
+// ─────────────────────────────────────────
+// TblClient
+// ─────────────────────────────────────────
+model TblClient {
+  ClientID           Int       @id @default(autoincrement())
+  ClientName         String
+  ClientJurisdiction String
+  ClientFYEDate      DateTime?
+  EntityType         String?
+  Priority           String?
+  IsActive           Boolean   @default(true)
+  CreatedDate        DateTime  @default(now())
+  CreatedBy          Int?
+
+  // Relations
+  CreatedByStaff TblStaff? @relation("ClientCreatedBy", fields: [CreatedBy], references: [StaffID])
+  Jobs           TblJob[]
+  AuditTrail     TblDueDateAuditTrail[]
+
+  @@map("TblClient")
+}
+
+// ─────────────────────────────────────────
+// TblServiceLine
+// ─────────────────────────────────────────
+model TblServiceLine {
+  ServiceLineID Int      @id @default(autoincrement())
+  ServiceLine   String
+  Description   String?
+  IsActive      Boolean  @default(true)
+  SortOrder     Int      @default(0)
+
+  // Relations
+  Jobs TblJob[]
+
+  @@map("TblServiceLine")
+}
+
+// ─────────────────────────────────────────
+// TblCurrentStage
+// ─────────────────────────────────────────
+model TblCurrentStage {
+  CurrentStageID Int      @id @default(autoincrement())
+  CurrentStage   String
+  Description    String?
+  IsActive       Boolean  @default(true)
+  SortOrder      Int      @default(0)
+  IsPipeline     Boolean  @default(false)
+  IsCompleted    Boolean  @default(false)
+  IsLost         Boolean  @default(false)
+
+  // Relations
+  Jobs TblJob[]
+
+  @@map("TblCurrentStage")
+}
+
+// ─────────────────────────────────────────
+// TblChargeAccs
+// ─────────────────────────────────────────
+model TblChargeAccs {
+  ChargeAcID  Int      @id @default(autoincrement())
+  Description String
+  ChargeType  String
+  IsActive    Boolean  @default(true)
+
+  @@map("TblChargeAccs")
+}
+
+// ─────────────────────────────────────────
+// TblJob
+// ─────────────────────────────────────────
+model TblJob {
+  JobID                Int       @id @default(autoincrement())
+  ClientID             Int
+  JobName              String
+  FYE                  DateTime
+  TaxYear              Int
+  FormType             String
+  EntityType           String
+  Jurisdiction         String
+  StateProvince        String?
+  ServiceLineID        Int?
+  ClientPartnerID      Int?
+  MandatePartnerID     Int?
+  ManagerID            Int?
+  AssignedStaffID      Int?
+  AssistingStaffID     Int?
+  CurrentStageID       Int?
+  Budget               Decimal?
+  ClientCommitmentDate DateTime?
+  ClientDeadline       DateTime?
+  StaffDueDate         DateTime?
+  OriginalDeadline     DateTime?
+  ExtensionDeadline    DateTime?
+  DisasterDeadline     DateTime?
+  DeadlineType         String?
+  HolidayLocation      String?
+  HolidayEligible      String?
+  DisasterLocation     String?
+  DisasterEligible     String?
+  SourceURL            String?
+  ExtensionFiled       Boolean   @default(false)
+  ExtensionFiledDate   DateTime?
+  IsActive             Boolean   @default(true)
+  CreatedDate          DateTime  @default(now())
+  CreatedBy            Int?
+  Completion           DateTime?
+
+  // Relations
+  Client          TblClient       @relation(fields: [ClientID], references: [ClientID])
+  ServiceLine     TblServiceLine? @relation(fields: [ServiceLineID], references: [ServiceLineID])
+  ClientPartner   TblPartner?     @relation("JobClientPartner", fields: [ClientPartnerID], references: [PartnerID])
+  MandatePartner  TblPartner?     @relation("JobMandatePartner", fields: [MandatePartnerID], references: [PartnerID])
+  Manager         TblManager?     @relation(fields: [ManagerID], references: [ManagerID])
+  AssignedStaff   TblStaff?       @relation("JobAssignedStaff", fields: [AssignedStaffID], references: [StaffID])
+  AssistingStaff  TblStaff?       @relation("JobAssistingStaff", fields: [AssistingStaffID], references: [StaffID])
+  CurrentStage    TblCurrentStage? @relation(fields: [CurrentStageID], references: [CurrentStageID])
+  CreatedByStaff  TblStaff?       @relation("JobCreatedBy", fields: [CreatedBy], references: [StaffID])
+  AuditTrail      TblDueDateAuditTrail[]
+  Alerts          TblAlert[]
+  CustomValues    TblJobCustomValue[]
+
+  @@map("TblJob")
+}
+
+// ─────────────────────────────────────────
+// TblDueDateAuditTrail
+// ─────────────────────────────────────────
+model TblDueDateAuditTrail {
+  AuditID         Int       @id @default(autoincrement())
+  JobID           Int
+  ClientID        Int
+  FieldChanged    String
+  OldValue        String?
+  NewValue        String?
+  ChangeType      String
+  ExtensionForm   String?
+  ConfirmationNum String?
+  ChangeReason    String?
+  ChangedBy       Int?
+  ChangedDate     DateTime  @default(now())
+  ApprovedBy      Int?
+  ApprovedDate    DateTime?
+  CreatedBy       Int?
+  CreatedDate     DateTime  @default(now())
+  DeletedBy       Int?
+  DeletedDate     DateTime?
+  IsDeleted       Boolean   @default(false)
+
+  // Relations
+  Job            TblJob    @relation(fields: [JobID], references: [JobID])
+  Client         TblClient @relation(fields: [ClientID], references: [ClientID])
+  ChangedByStaff  TblStaff? @relation("AuditChangedBy", fields: [ChangedBy], references: [StaffID])
+  ApprovedByStaff TblStaff? @relation("AuditApprovedBy", fields: [ApprovedBy], references: [StaffID])
+  CreatedByStaff  TblStaff? @relation("AuditCreatedBy", fields: [CreatedBy], references: [StaffID])
+  DeletedByStaff  TblStaff? @relation("AuditDeletedBy", fields: [DeletedBy], references: [StaffID])
+
+  @@map("TblDueDateAuditTrail")
+}
+
+// ─────────────────────────────────────────
+// TblTaxCalendar
+// ─────────────────────────────────────────
+model TblTaxCalendar {
+  CalendarID        Int       @id @default(autoincrement())
+  FYE               DateTime
+  TaxYear           Int
+  FormType          String
+  EntityType        String
+  Jurisdiction      String
+  StateProvince     String?
+  HolidayLocation   String?
+  HolidayEligible   String    @default("No")
+  DisasterLocation  String?
+  DisasterCounties  String?
+  DisasterName      String?
+  DisasterEligible  String    @default("No")
+  OriginalDeadline  DateTime?
+  ExtensionDeadline DateTime?
+  DisasterDeadline  DateTime?
+  SourceType        String?
+  SourceURL         String?
+
+  @@map("TblTaxCalendar")
+}
+
+// ─────────────────────────────────────────
+// TblAlert
+// ─────────────────────────────────────────
+model TblAlert {
+  AlertID         Int       @id @default(autoincrement())
+  JobID           Int
+  StaffID         Int
+  AlertType       String
+  AlertDate       DateTime?
+  SentDate        DateTime?
+  EmailAddress    String?
+  Subject         String?
+  Message         String?
+  IsSent          Boolean   @default(false)
+  IsRead          Boolean   @default(false)
+  ReadDate        DateTime?
+  ActionRequired  String?
+  ActionTaken     String?
+  ActionTakenDate DateTime?
+  ActionTakenBy   Int?
+
+  // Relations
+  Job           TblJob    @relation(fields: [JobID], references: [JobID])
+  Staff         TblStaff  @relation("AlertStaff", fields: [StaffID], references: [StaffID])
+  ActionByStaff TblStaff? @relation("AlertActionBy", fields: [ActionTakenBy], references: [StaffID])
+
+  @@map("TblAlert")
+}
+
+// ─────────────────────────────────────────
+// TblAppAdmin (custom columns)
+// ─────────────────────────────────────────
+model TblAppAdmin {
+  CustomColumnID Int      @id @default(autoincrement())
+  ColumnName     String
+  ColumnType     String
+  IsVisible      Boolean  @default(true)
+  SortOrder      Int      @default(0)
+  CreatedBy      Int?
+  CreatedDate    DateTime @default(now())
+
+  // Relations
+  CreatedByStaff TblStaff?         @relation("AdminCreatedBy", fields: [CreatedBy], references: [StaffID])
+  CustomValues   TblJobCustomValue[]
+
+  @@map("TblAppAdmin")
+}
+
+// ─────────────────────────────────────────
+// TblJobCustomValue
+// ─────────────────────────────────────────
+model TblJobCustomValue {
+  CustomValueID  Int    @id @default(autoincrement())
+  CustomColumnID Int
+  JobID          Int
+  Value          String?
+
+  // Relations
+  CustomColumn TblAppAdmin @relation(fields: [CustomColumnID], references: [CustomColumnID])
+  Job          TblJob      @relation(fields: [JobID], references: [JobID])
+
+  @@map("TblJobCustomValue")
+}

@@ -1,0 +1,41 @@
+name: Update Tax Calendar
+
+on:
+  # Runs every Sunday at midnight UTC
+  schedule:
+    - cron: '0 0 * * 0'
+  
+  # Allows manual trigger from GitHub Actions tab
+  workflow_dispatch:
+    inputs:
+      year:
+        description: 'Tax year to process (e.g. 2026)'
+        required: false
+        default: '2026'
+
+jobs:
+  update-calendar:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests pypdf python-dateutil psycopg2-binary python-dotenv
+
+      - name: Run tax calendar update
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TAX_YEAR: ${{ github.event.inputs.year }}
+        run: |
+          python scripts/update_tax_calendar.py
+
+      - name: Report success
+        run: echo "Tax calendar updated successfully"

@@ -15,6 +15,7 @@ import calendar
 import requests
 from datetime import datetime, date, timedelta
 from urllib.parse import urljoin
+import sys
 import os
 import psycopg2
 from dotenv import load_dotenv
@@ -34,7 +35,18 @@ except ImportError:
 # USER INPUT
 # ============================================================
 
-YEAR_INPUT = 2026
+# YEAR_INPUT = 2026
+
+# Dynamic year — from command line, environment variable, or current year
+if len(sys.argv) > 1:
+    # Passed as command line argument: python script.py 2025
+    YEAR_INPUT = int(sys.argv[1])
+elif os.environ.get("TAX_YEAR"):
+    # Passed as environment variable: TAX_YEAR=2025
+    YEAR_INPUT = int(os.environ.get("TAX_YEAR"))
+else:
+    # Default to current year
+    YEAR_INPUT = datetime.now().year
 
 
 # ============================================================

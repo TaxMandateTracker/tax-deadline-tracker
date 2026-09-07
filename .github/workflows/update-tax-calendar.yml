@@ -1,11 +1,8 @@
 name: Update Tax Calendar
 
 on:
-  # Runs every Sunday at midnight UTC
   schedule:
     - cron: '0 0 * * 0'
-  
-  # Allows manual trigger from GitHub Actions tab
   workflow_dispatch:
     inputs:
       year:
@@ -32,8 +29,10 @@ jobs:
 
       - name: Run tax calendar update
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
           TAX_YEAR: ${{ github.event.inputs.year }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
         run: |
           python scripts/update_tax_calendar.py
 

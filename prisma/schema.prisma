@@ -86,6 +86,9 @@ model TblClient {
   ClientID           Int       @id @default(autoincrement())
   ClientName         String
   ClientJurisdiction String
+  ClientState        String?
+  ClientCounty       String?
+  ClientZipCode      String?
   ClientFYEDate      DateTime?
   EntityType         String?
   Priority           String?

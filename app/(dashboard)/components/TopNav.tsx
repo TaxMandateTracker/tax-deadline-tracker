@@ -16,7 +16,8 @@ export default function TopNav({ email }: Props) {
   const router = useRouter()
 
     const allNavLinks = [
-    { href: "/tax-calendar", label: "Tax Calendar", roles: ["Partner", "IT Admin", "Manager", "Senior", "Associate", "Junior"] },
+    { href: "/mandates",     label: "Mandate Tracker", roles: ["Partner", "IT Admin", "Manager", "Senior", "Associate", "Junior"] },
+    { href: "/tax-calendar", label: "Tax Calendar",    roles: ["Partner", "IT Admin", "Manager", "Senior"] },
   ]
 
   const userRole = currentUser?.role ?? "Associate"

@@ -74,7 +74,8 @@ model TblManager {
 
   // Relations
   Staff TblStaff @relation(fields: [StaffID], references: [StaffID])
-  Jobs  TblJob[]
+  ClientManagerJobs  TblJob[] @relation("JobClientManager")
+  MandateManagerJobs TblJob[] @relation("JobMandateManager")
 
   @@map("TblManager")
 }
@@ -162,12 +163,14 @@ model TblJob {
   TaxYear              Int
   FormType             String
   EntityType           String
-  Jurisdiction         String
+  Country              String?
+  Jurisdiction         String?
   StateProvince        String?
   ServiceLineID        Int?
   ClientPartnerID      Int?
   MandatePartnerID     Int?
-  ManagerID            Int?
+  ClientManagerID      Int?
+  MandateManagerID     Int?
   AssignedStaffID      Int?
   AssistingStaffID     Int?
   CurrentStageID       Int?
@@ -196,7 +199,8 @@ model TblJob {
   ServiceLine     TblServiceLine? @relation(fields: [ServiceLineID], references: [ServiceLineID])
   ClientPartner   TblPartner?     @relation("JobClientPartner", fields: [ClientPartnerID], references: [PartnerID])
   MandatePartner  TblPartner?     @relation("JobMandatePartner", fields: [MandatePartnerID], references: [PartnerID])
-  Manager         TblManager?     @relation(fields: [ManagerID], references: [ManagerID])
+  ClientManager   TblManager?     @relation("JobClientManager",  fields: [ClientManagerID],  references: [ManagerID])
+  MandateManager  TblManager?     @relation("JobMandateManager", fields: [MandateManagerID], references: [ManagerID])
   AssignedStaff   TblStaff?       @relation("JobAssignedStaff", fields: [AssignedStaffID], references: [StaffID])
   AssistingStaff  TblStaff?       @relation("JobAssistingStaff", fields: [AssistingStaffID], references: [StaffID])
   CurrentStage    TblCurrentStage? @relation(fields: [CurrentStageID], references: [CurrentStageID])
@@ -252,7 +256,8 @@ model TblTaxCalendar {
   TaxYear           Int
   FormType          String
   EntityType        String
-  Jurisdiction      String
+  Country           String    @default("US")
+  Jurisdiction      String?
   StateProvince     String?
   HolidayLocation   String?
   HolidayEligible   String    @default("No")

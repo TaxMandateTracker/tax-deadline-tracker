@@ -69,7 +69,14 @@ export async function GET(request: Request) {
             Email:       true,
           },
         },
-        Manager: {
+                MandateManager: {
+          select: {
+            ManagerID:   true,
+            ManagerName: true,
+            Email:       true,
+          },
+        },
+        ClientManager: {
           select: {
             ManagerID:   true,
             ManagerName: true,
@@ -126,13 +133,13 @@ export async function GET(request: Request) {
       mandates.map(async (mandate) => {
         let taxCalendar = null
 
-        if (mandate.FormType && mandate.FYE && mandate.Jurisdiction) {
+        if (mandate.FormType && mandate.FYE) {
           const fye = new Date(mandate.FYE)
 
           taxCalendar = await prisma.tblTaxCalendar.findFirst({
             where: {
               FormType:     mandate.FormType,
-              Jurisdiction: mandate.Jurisdiction,
+              Jurisdiction: mandate.Jurisdiction ?? "Federal",
               FYE: {
                 gte: new Date(fye.getFullYear(), fye.getMonth(), 1),
                 lte: new Date(fye.getFullYear(), fye.getMonth() + 1, 0),
@@ -215,7 +222,8 @@ export async function POST(request: Request) {
         ServiceLineID:       body.ServiceLineID ?? null,
         ClientPartnerID:     body.ClientPartnerID ?? null,
         MandatePartnerID:    body.MandatePartnerID ?? null,
-        ManagerID:           body.ManagerID ?? null,
+        MandateManagerID:    body.MandateManagerID ?? null,
+        ClientManagerID:     body.ClientManagerID ?? null,
         AssignedStaffID:     body.AssignedStaffID ?? null,
         AssistingStaffID:    body.AssistingStaffID ?? null,
         CurrentStageID:      body.CurrentStageID ?? null,
@@ -232,7 +240,8 @@ export async function POST(request: Request) {
         ServiceLine:   true,
         ClientPartner: true,
         MandatePartner:true,
-        Manager:       true,
+        MandateManager: true,
+        ClientManager:  true,
         AssignedStaff: true,
         AssistingStaff:true,
         CurrentStage:  true,

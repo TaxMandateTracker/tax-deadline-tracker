@@ -425,16 +425,10 @@ export default function MandateTracker() {
           </div>
         )
 
-      case "ClientJurisdiction":
+            case "ClientJurisdiction":
         return (
-          <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
-            mandate.Client?.ClientJurisdiction === "US"
-              ? "bg-blue-100 text-blue-700"
-              : mandate.Client?.ClientJurisdiction === "Canada"
-              ? "bg-red-100 text-red-700"
-              : "bg-gray-100 text-gray-600"
-          }`}>
-            {mandate.Client?.ClientJurisdiction ?? "—"}
+          <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-gray-100 text-gray-600">
+            {mandate.Jurisdiction ?? "—"}
           </span>
         )
 

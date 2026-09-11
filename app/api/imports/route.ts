@@ -21,16 +21,16 @@ function mapFormType(raw: string): string {
   return val
 }
 
-function getCountry(jurisdiction: string): string {
-  const val = (jurisdiction ?? "").toLowerCase().trim()
-  const canadianProvinces = [
-    "ontario", "quebec", "british columbia", "alberta",
-    "manitoba", "saskatchewan", "nova scotia",
-    "new brunswick", "newfoundland", "pei",
-    "prince edward island", "northwest territories",
-    "nunavut", "yukon", "canada"
-  ]
-  if (canadianProvinces.some(p => val.includes(p))) return "Canada"
+function getCountry(formType: string): string {
+  const f = (formType ?? "").toUpperCase().trim()
+  if (
+    f.startsWith("T1") ||
+    f.startsWith("T2") ||
+    f.startsWith("T3") ||
+    f.startsWith("T4") ||
+    f === "GST/HST" ||
+    f === "T3010"
+  ) return "Canada"
   return "US"
 }
 
@@ -127,7 +127,7 @@ export async function POST(request: Request) {
           if (existing) {
             clientID = existing.ClientID
           } else {
-            const country = getCountry(jurisdiction)
+            const country = getCountry(mapFormType(formNumber))
             const created = await prisma.tblClient.create({
               data: {
                 ClientName:         clientName,
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
           continue
         }
 
-        const country        = getCountry(jurisdiction)
+        const country        = getCountry(formMapped)
         const jurisdictionVal = isFederal(jurisdiction) ? "Federal" : jurisdiction
 
         await prisma.tblJob.create({

@@ -63,6 +63,7 @@ interface Mandate {
   FormType: string
   EntityType: string
   Jurisdiction: string
+  Country: string | null
   Budget: number | null
   ClientCommitmentDate: string | null
   StaffDueDate: string | null
@@ -363,7 +364,7 @@ export default function MandateTracker() {
 
   const filteredAndSorted = useMemo(() => {
     const filtered = mandates.filter(m => {
-      if (filterJurisdiction !== "all" && m.Jurisdiction !== filterJurisdiction) return false
+      if (filterJurisdiction !== "all" && m.Country !== filterJurisdiction) return false
       if (filterServiceLine !== "all" && m.ServiceLine?.ServiceLine !== filterServiceLine) return false
       if (filterStage !== "all" && m.CurrentStage?.CurrentStage !== filterStage) return false
       if (search) {
@@ -678,7 +679,7 @@ export default function MandateTracker() {
           onChange={e => setFilterJurisdiction(e.target.value)}
           className="text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none"
         >
-          <option value="all">All jurisdictions</option>
+          <option value="all">All Countries</option>
           <option value="US">US</option>
           <option value="Canada">Canada</option>
         </select>

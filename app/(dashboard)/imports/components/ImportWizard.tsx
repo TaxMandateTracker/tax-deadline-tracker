@@ -50,6 +50,8 @@ export default function ImportWizard() {
   const [error, setError]             = useState<string>("")
   const [dragOver, setDragOver]       = useState(false)
   const fileInputRef                  = useRef<HTMLInputElement>(null)
+  const [previewPage, setPreviewPage] = useState(1)
+  const PAGE_SIZE = 100
 
   function normalizeHeader(h: string): string {
     return h.toLowerCase().trim()
@@ -89,7 +91,8 @@ export default function ImportWizard() {
         const hdrs = Object.keys(normalizedRows[0] ?? {})
         setHeaders(hdrs)
         setRows(normalizedRows)
-        setPreview(normalizedRows.slice(0, 100))
+        setPreview(normalizedRows)
+        setPreviewPage(1)
         setStep(2)
       } catch (err) {
         setError(`Failed to read file: ${err}`)
@@ -272,7 +275,7 @@ export default function ImportWizard() {
                   📄 {file?.name}
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">
-                {rows.length} rows found — showing first {Math.min(rows.length, 100)} rows
+                {rows.length} rows found — showing {Math.min(previewPage * PAGE_SIZE, rows.length)} of {rows.length} rows
                 </p>
               </div>
               <div className="flex gap-2">
@@ -301,9 +304,9 @@ export default function ImportWizard() {
                       </th>
                     ))}
                   </tr>
-                </thead>
+                </thead>              
                 <tbody>
-                  {preview.map((row, i) => (
+                  {preview.slice((previewPage - 1) * PAGE_SIZE, previewPage * PAGE_SIZE).map((row, i) => (
                     <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
                       {headers.map(h => (
                         <td key={h} className="px-3 py-2 text-gray-600 whitespace-nowrap max-w-xs truncate">
@@ -314,6 +317,30 @@ export default function ImportWizard() {
                   ))}
                 </tbody>
               </table>
+                          {/* Pagination */}
+            {rows.length > PAGE_SIZE && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl">
+                <span className="text-xs text-gray-500">
+                  Page {previewPage} of {Math.ceil(rows.length / PAGE_SIZE)}
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPreviewPage(prev => Math.max(1, prev - 1))}
+                    disabled={previewPage === 1}
+                    className="text-xs border border-gray-200 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-100 disabled:opacity-40"
+                  >
+                    ← Previous
+                  </button>
+                  <button
+                    onClick={() => setPreviewPage(prev => Math.min(Math.ceil(rows.length / PAGE_SIZE), prev + 1))}
+                    disabled={previewPage === Math.ceil(rows.length / PAGE_SIZE)}
+                    className="text-xs border border-gray-200 text-gray-600 px-3 py-1.5 rounded hover:bg-gray-100 disabled:opacity-40"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </div>
+            )}
             </div>
           </div>
         )}

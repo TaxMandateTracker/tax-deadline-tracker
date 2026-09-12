@@ -92,6 +92,54 @@ export async function POST(request: Request) {
 
     const clientCache: Record<string, number> = {}
 
+        const staffCache: Record<string, number> = {}
+
+    // Helper to get or create staff by name
+    async function getOrCreateStaff(fullName: string): Promise<number | null> {
+      if (!fullName || fullName.trim() === "" || fullName === "NaN") return null
+      
+      const key = fullName.toLowerCase().trim()
+      if (staffCache[key]) return staffCache[key]
+
+      const nameParts = fullName.trim().split(" ")
+      const firstName = nameParts[0] ?? ""
+      const lastName  = nameParts.slice(1).join(" ") || firstName
+
+      // Check existing staff
+      const existing = await prisma.tblStaff.findFirst({
+        where: {
+          OR: [
+            {
+              FirstName: { equals: firstName, mode: "insensitive" },
+              LastName:  { equals: lastName,  mode: "insensitive" },
+            },
+            {
+              FirstName: { equals: fullName.trim(), mode: "insensitive" },
+            },
+          ],
+        },
+      })
+
+      if (existing) {
+        staffCache[key] = existing.StaffID
+        return existing.StaffID
+      }
+
+      // Create new staff
+      const created = await prisma.tblStaff.create({
+        data: {
+          FirstName: firstName,
+          LastName:  lastName,
+          Email:     `${firstName.toLowerCase()}.${lastName.toLowerCase()}@firm.com`,
+          Role:      "Associate",
+        },
+      })
+
+      staffCache[key] = created.StaffID
+      results.details.push(`Staff created: ${fullName}`)
+      return created.StaffID
+    }
+
     for (const row of rows) {
       try {
         const clientName   = (row["client name"] || "").trim()
@@ -165,22 +213,52 @@ export async function POST(request: Request) {
         const country        = getCountry(formMapped)
         const jurisdictionVal = isFederal(jurisdiction) ? "Federal" : jurisdiction
 
+                // Get or create staff from Excel columns
+        const assignedStaffID  = await getOrCreateStaff(row["mandate preparer"]  || "")
+        const assignedStaffID2 = await getOrCreateStaff(row["mandate manager"]   || "")
+        const assignedStaffID3 = await getOrCreateStaff(row["client manager"]    || "")
+        const assignedStaffID4 = await getOrCreateStaff(row["mandate partner"]   || "")
+        const assignedStaffID5 = await getOrCreateStaff(row["client partner"]    || "")
+
+        // Look up manager records
+        const mandateManager = assignedStaffID2
+          ? await prisma.tblManager.findFirst({ where: { StaffID: assignedStaffID2 } })
+          : null
+
+        const clientManager = assignedStaffID3
+          ? await prisma.tblManager.findFirst({ where: { StaffID: assignedStaffID3 } })
+          : null
+
+        // Look up partner records
+        const mandatePartner = assignedStaffID4
+          ? await prisma.tblPartner.findFirst({ where: { StaffID: assignedStaffID4 } })
+          : null
+
+        const clientPartner = assignedStaffID5
+          ? await prisma.tblPartner.findFirst({ where: { StaffID: assignedStaffID5 } })
+          : null
+
         await prisma.tblJob.create({
           data: {
-            ClientID:          clientID,
-            JobName:           jobName,
-            FYE:               parseDate(fye) ?? new Date(),
-            TaxYear:           taxYear,
-            FormType:          formMapped,
-            EntityType:        mapEntityType(entityType),
-            Country:           country,
-            Jurisdiction:      jurisdictionVal,
-            CurrentStageID:    defaultStage?.CurrentStageID ?? null,
-            ServiceLineID:     defaultServiceLine?.ServiceLineID ?? null,
+            ClientID:           clientID,
+            JobName:            jobName,
+            FYE:                parseDate(fye) ?? new Date(),
+            TaxYear:            taxYear,
+            FormType:           formMapped,
+            EntityType:         mapEntityType(entityType),
+            Country:            country,
+            Jurisdiction:       jurisdictionVal,
+            CurrentStageID:     defaultStage?.CurrentStageID ?? null,
+            ServiceLineID:      defaultServiceLine?.ServiceLineID ?? null,
             ExtensionFiledDate: parseDate(row["date extension filed"]),
-            ExtensionFiled:    !!parseDate(row["date extension filed"]),
-            Completion:        parseDate(row["date return filed"]),
-            StaffDueDate:      parseDate(row["expected/internal due date"]),
+            ExtensionFiled:     !!parseDate(row["date extension filed"]),
+            Completion:         parseDate(row["date return filed"]),
+            StaffDueDate:       parseDate(row["expected/internal due date"]),
+            AssignedStaffID:    assignedStaffID,
+            MandateManagerID:   mandateManager?.ManagerID ?? null,
+            ClientManagerID:    clientManager?.ManagerID ?? null,
+            MandatePartnerID:   mandatePartner?.PartnerID ?? null,
+            ClientPartnerID:    clientPartner?.PartnerID ?? null,
           },
         })
 

@@ -19,6 +19,7 @@ export default function TopNav({ email }: Props) {
     { href: "/mandates",     label: "Mandate Tracker", roles: ["Partner", "IT Admin", "Manager", "Senior", "Associate", "Junior"] },
     { href: "/tax-calendar", label: "Tax Calendar",    roles: ["Partner", "IT Admin", "Manager", "Senior"] },
     { href: "/imports",      label: "Imports",         roles: ["Partner", "IT Admin", "Manager"] },
+    { href: "/exports",      label: "Exports",         roles: ["Partner", "IT Admin", "Manager"] },
   ]
 
   const userRole = currentUser?.role ?? "Associate"

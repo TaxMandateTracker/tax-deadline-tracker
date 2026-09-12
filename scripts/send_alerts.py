@@ -351,8 +351,14 @@ def process_mandate(mandate):
             recipients.append(client_partner)
 
     if not recipients:
-        print(f"   ⚠️  No recipients found — skipping")
-        return
+        # Fallback to alert email for testing
+       fallback_email = FROM_EMAIL
+       if fallback_email:
+           print(f"   ⚠️  No recipients found — sending to fallback: {fallback_email}")
+           recipients = [{"Email": fallback_email}]
+       else:
+            print(f"   ⚠️  No recipients found — skipping")
+            return
 
     # Send emails
     print(f"   📧 Sending {alert_type} alert to {len(recipients)} recipient(s)...")

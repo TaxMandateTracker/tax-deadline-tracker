@@ -238,11 +238,36 @@ export async function POST(request: Request) {
           ? await prisma.tblPartner.findFirst({ where: { StaffID: assignedStaffID5 } })
           : null
 
+                // Look up deadline from TblTaxCalendar
+        const fyeDate = parseDate(fye)
+        let originalDeadline  = null
+        let extensionDeadline = null
+
+        if (fyeDate && formMapped) {
+          const calendarEntry = await prisma.tblTaxCalendar.findFirst({
+            where: {
+              FormType:         formMapped,
+              Jurisdiction:     jurisdictionVal,
+              DisasterEligible: "No",
+              FYE: {
+                gte: new Date(fyeDate.getFullYear(), fyeDate.getMonth(), 1),
+                lte: new Date(fyeDate.getFullYear(), fyeDate.getMonth() + 1, 0),
+              },
+            },
+            orderBy: { FYE: "asc" },
+          })
+
+          if (calendarEntry) {
+            originalDeadline  = calendarEntry.OriginalDeadline
+            extensionDeadline = calendarEntry.ExtensionDeadline
+          }
+        }
+
         await prisma.tblJob.create({
           data: {
             ClientID:           clientID,
             JobName:            jobName,
-            FYE:                parseDate(fye) ?? new Date(),
+            FYE:                fyeDate ?? new Date(),
             TaxYear:            taxYear,
             FormType:           formMapped,
             EntityType:         mapEntityType(entityType),
@@ -259,9 +284,11 @@ export async function POST(request: Request) {
             ClientManagerID:    clientManager?.ManagerID ?? null,
             MandatePartnerID:   mandatePartner?.PartnerID ?? null,
             ClientPartnerID:    clientPartner?.PartnerID ?? null,
+            OriginalDeadline:   originalDeadline,
+            ExtensionDeadline:  extensionDeadline,
           },
         })
-
+        
         results.imported++
         results.details.push(`✅ Imported: ${jobName}`)
 

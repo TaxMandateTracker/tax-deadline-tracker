@@ -89,7 +89,7 @@ export default function ImportWizard() {
         const hdrs = Object.keys(normalizedRows[0] ?? {})
         setHeaders(hdrs)
         setRows(normalizedRows)
-        setPreview(normalizedRows.slice(0, 5))
+        setPreview(normalizedRows.slice(0, 100))
         setStep(2)
       } catch (err) {
         setError(`Failed to read file: ${err}`)
@@ -272,7 +272,7 @@ export default function ImportWizard() {
                   📄 {file?.name}
                 </p>
                 <p className="text-xs text-gray-400 mt-0.5">
-                  {rows.length} rows found — showing first 5 rows
+                {rows.length} rows found — showing first {Math.min(rows.length, 100)} rows
                 </p>
               </div>
               <div className="flex gap-2">

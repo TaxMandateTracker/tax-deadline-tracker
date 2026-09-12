@@ -1,0 +1,39 @@
+name: Send Deadline Alerts
+
+on:
+  # Runs every day at 8am UTC
+  schedule:
+    - cron: '0 8 * * *'
+  
+  # Manual trigger for testing
+  workflow_dispatch:
+
+jobs:
+  send-alerts:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests python-dotenv
+
+      - name: Send deadline alerts
+        env:
+          SUPABASE_URL:        ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+          GMAIL_USER:          ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD:  ${{ secrets.GMAIL_APP_PASSWORD }}
+          ALERT_FROM_EMAIL:    ${{ secrets.ALERT_FROM_EMAIL }}
+        run: |
+          python scripts/send_alerts.py
+
+      - name: Report success
+        run: echo "Alerts sent successfully"

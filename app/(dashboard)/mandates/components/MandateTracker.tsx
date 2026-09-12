@@ -150,28 +150,45 @@ const STAGE_COLORS: Record<string, string> = {
 // DEADLINE COLOR LOGIC
 // ─────────────────────────────────────────
 
-function getDeadlineColor(dateStr: string | null): string {
-  if (!dateStr) return "text-gray-400"
+function getDeadlineDays(dateStr: string | null): number | null {
+  if (!dateStr) return null
   const due  = new Date(dateStr)
   const now  = new Date()
-  const diff = (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  if (diff < 0)   return "text-red-600 font-bold"
-  if (diff <= 7)  return "text-red-500 font-semibold"
-  if (diff <= 14) return "text-orange-500 font-medium"
+  return Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+}
+
+function getDeadlineBadge(dateStr: string | null): string {
+  const days = getDeadlineDays(dateStr)
+  if (days === null) return ""
+  if (days < 0)   return "⚠️"
+  if (days === 0) return "🔴"
+  if (days <= 3)  return "🔴"
+  if (days <= 7)  return "🟠"
+  if (days <= 14) return "🟡"
+  return "🟢"
+}
+
+function getDeadlineColor(dateStr: string | null): string {
+  const days = getDeadlineDays(dateStr)
+  if (days === null) return "text-gray-400"
+  if (days < 0)   return "text-red-600 font-bold"
+  if (days === 0) return "text-red-600 font-bold"
+  if (days <= 3)  return "text-red-500 font-semibold"
+  if (days <= 7)  return "text-orange-500 font-semibold"
+  if (days <= 14) return "text-yellow-600 font-medium"
   return "text-green-600 font-medium"
 }
 
 function getDeadlineBg(dateStr: string | null): string {
-  if (!dateStr) return ""
-  const due  = new Date(dateStr)
-  const now  = new Date()
-  const diff = (due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-  if (diff < 0)   return "bg-red-50"
-  if (diff <= 7)  return "bg-red-50"
-  if (diff <= 14) return "bg-orange-50"
+  const days = getDeadlineDays(dateStr)
+  if (days === null) return ""
+  if (days < 0)   return "bg-red-50"
+  if (days === 0) return "bg-red-50"
+  if (days <= 3)  return "bg-red-50"
+  if (days <= 7)  return "bg-orange-50"
+  if (days <= 14) return "bg-yellow-50"
   return "bg-green-50"
 }
-
 // ─────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────
@@ -516,25 +533,24 @@ export default function MandateTracker() {
           </div>
         ) : <span className="text-gray-400">—</span>
 
-      case "LegalDueDate":
+        case "LegalDueDate": {
+        const isActive = !mandate.ExtensionFiled && mandate.DeadlineType !== "DISASTER"
         return mandate.LegalDueDate ? (
-          <div className={`px-1.5 py-0.5 rounded text-[11px] ${getDeadlineBg(mandate.LegalDueDate)}`}>
-            <span className={getDeadlineColor(mandate.LegalDueDate)}>
+          <div className={`px-1.5 py-0.5 rounded text-[11px] ${isActive ? getDeadlineBg(mandate.LegalDueDate) : ""}`}>
+            <span className={isActive ? getDeadlineColor(mandate.LegalDueDate) : "text-gray-400"}>
+              {isActive && `${getDeadlineBadge(mandate.LegalDueDate)} `}
               {formatDate(mandate.LegalDueDate)}
             </span>
           </div>
         ) : <span className="text-gray-400">—</span>
+      }
 
-      case "ExtendedDueDate":
+            case "ExtendedDueDate": {
+        const isActive = mandate.ExtensionFiled && mandate.DeadlineType !== "DISASTER"
         return mandate.ExtendedDueDate ? (
-          <div className={`px-1.5 py-0.5 rounded text-[11px] ${
-            mandate.ExtensionFiled ? getDeadlineBg(mandate.ExtendedDueDate) : ""
-          }`}>
-            <span className={
-              mandate.ExtensionFiled
-                ? getDeadlineColor(mandate.ExtendedDueDate)
-                : "text-gray-400"
-            }>
+          <div className={`px-1.5 py-0.5 rounded text-[11px] ${isActive ? getDeadlineBg(mandate.ExtendedDueDate) : ""}`}>
+            <span className={isActive ? getDeadlineColor(mandate.ExtendedDueDate) : "text-gray-400"}>
+              {isActive && `${getDeadlineBadge(mandate.ExtendedDueDate)} `}
               {formatDate(mandate.ExtendedDueDate)}
             </span>
             {mandate.ExtensionFiled && (
@@ -544,19 +560,14 @@ export default function MandateTracker() {
             )}
           </div>
         ) : <span className="text-gray-400">—</span>
+      }
 
-      case "DisasterDueDate":
+      case "DisasterDueDate": {
+        const isActive = mandate.DeadlineType === "DISASTER"
         return mandate.DisasterDueDate ? (
-          <div className={`px-1.5 py-0.5 rounded text-[11px] ${
-            mandate.DeadlineType === "DISASTER"
-              ? getDeadlineBg(mandate.DisasterDueDate)
-              : "bg-gray-50"
-          }`}>
-            <span className={
-              mandate.DeadlineType === "DISASTER"
-                ? getDeadlineColor(mandate.DisasterDueDate)
-                : "text-gray-400"
-            }>
+          <div className={`px-1.5 py-0.5 rounded text-[11px] ${isActive ? getDeadlineBg(mandate.DisasterDueDate) : "bg-gray-50"}`}>
+            <span className={isActive ? getDeadlineColor(mandate.DisasterDueDate) : "text-gray-400"}>
+              {isActive && `${getDeadlineBadge(mandate.DisasterDueDate)} `}
               {formatDate(mandate.DisasterDueDate)}
             </span>
             {mandate.DisasterName && (
@@ -564,7 +575,7 @@ export default function MandateTracker() {
                 {mandate.DisasterName}
               </div>
             )}
-            {canOverride && mandate.DeadlineType !== "DISASTER" && (
+            {canOverride && !isActive && (
               <button
                 onClick={() => handleDisasterOverride(mandate.JobID)}
                 className="text-[9px] text-blue-500 hover:text-blue-700 mt-0.5 block"
@@ -574,6 +585,7 @@ export default function MandateTracker() {
             )}
           </div>
         ) : <span className="text-gray-400">—</span>
+      }
 
       case "CurrentStage":
         return mandate.CurrentStage ? (

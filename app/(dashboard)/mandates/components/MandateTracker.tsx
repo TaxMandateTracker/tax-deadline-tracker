@@ -2,36 +2,37 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { useUser } from "@/lib/context/UserContext"
+import MandateDetailPanel from "./MandateDetailPanel"
 
 // ─────────────────────────────────────────
 // INTERFACES
 // ─────────────────────────────────────────
 
-interface Staff {
+export interface Staff {
   StaffID: number
   FirstName: string
   LastName: string
   Email: string
 }
 
-interface Partner {
+export interface Partner {
   PartnerID: number
   PartnerName: string
   Email: string
 }
 
-interface Manager {
+export interface Manager {
   ManagerID: number
   ManagerName: string
   Email: string
 }
 
-interface ServiceLine {
+export interface ServiceLine {
   ServiceLineID: number
   ServiceLine: string
 }
 
-interface CurrentStage {
+export interface CurrentStage {
   CurrentStageID: number
   CurrentStage: string
   IsPipeline: boolean
@@ -39,7 +40,7 @@ interface CurrentStage {
   IsLost: boolean
 }
 
-interface Client {
+export interface Client {
   ClientID: number
   ClientName: string
   ClientJurisdiction: string
@@ -50,24 +51,33 @@ interface Client {
   EntityType: string | null
 }
 
-interface AuditEntry {
+export interface AuditEntry {
+  AuditID: number
+  FieldChanged: string
+  OldValue: string | null
+  NewValue: string | null
+  ChangeType: string
+  ChangeReason: string | null
+  ChangedDate: string
   CreatedDate: string
+  ChangedByStaff: { FirstName: string; LastName: string } | null
   CreatedByStaff: { FirstName: string; LastName: string } | null
 }
 
-interface Mandate {
+export interface Mandate {
   JobID: number
   JobName: string
   FYE: string
   TaxYear: number
   FormType: string
   EntityType: string
-  Jurisdiction: string
   Country: string | null
+  Jurisdiction: string | null
   Budget: number | null
   ClientCommitmentDate: string | null
   StaffDueDate: string | null
   ExtensionFiled: boolean
+  ExtensionFiledDate: string | null
   DeadlineType: string | null
   LegalDueDate: string | null
   ExtendedDueDate: string | null
@@ -79,13 +89,13 @@ interface Mandate {
   ServiceLine: ServiceLine | null
   ClientPartner: Partner | null
   MandatePartner: Partner | null
-  Manager: Manager | null
+  MandateManager: Manager | null
+  ClientManager: Manager | null
   AssignedStaff: Staff | null
   AssistingStaff: Staff | null
   CurrentStage: CurrentStage | null
   AuditTrail: AuditEntry[]
 }
-
 // ─────────────────────────────────────────
 // COLUMN DEFINITIONS
 // ─────────────────────────────────────────
@@ -216,9 +226,13 @@ export default function MandateTracker() {
   )
 
   // Lookup data
-  const [clients, setClients]         = useState<Client[]>([])
-  const [staffList, setStaffList]     = useState<Staff[]>([])
+  const [clients, setClients]           = useState<Client[]>([])
+  const [staffList, setStaffList]       = useState<Staff[]>([])
   const [serviceLines, setServiceLines] = useState<ServiceLine[]>([])
+  const [partners, setPartners]         = useState<Partner[]>([])
+  const [managers, setManagers]         = useState<Manager[]>([])
+  const [stages, setStages]             = useState<CurrentStage[]>([])
+  const [selectedMandate, setSelectedMandate] = useState<Mandate | null>(null)
 
   // Create form state
   const [newClientID, setNewClientID]                     = useState<number>(0)
@@ -260,20 +274,22 @@ export default function MandateTracker() {
     }
   }
 
-  async function fetchLookupData() {
+    async function fetchLookupData() {
     try {
-      const [clientsRes, staffRes] = await Promise.all([
+      const [clientsRes, staffRes, stagesRes, partnersRes, managersRes, serviceLinesRes] = await Promise.all([
         fetch("/api/clients"),
         fetch("/api/staff"),
+        fetch("/api/stages"),
+        fetch("/api/partners"),
+        fetch("/api/managers"),
+        fetch("/api/service-lines"),
       ])
-      if (clientsRes.ok) {
-        const data = await clientsRes.json()
-        setClients(Array.isArray(data) ? data : [])
-      }
-      if (staffRes.ok) {
-        const data = await staffRes.json()
-        setStaffList(Array.isArray(data) ? data : [])
-      }
+      if (clientsRes.ok)       setClients(await clientsRes.json())
+      if (staffRes.ok)         setStaffList(await staffRes.json())
+      if (stagesRes.ok)        setStages(await stagesRes.json())
+      if (partnersRes.ok)      setPartners(await partnersRes.json())
+      if (managersRes.ok)      setManagers(await managersRes.json())
+      if (serviceLinesRes.ok)  setServiceLines(await serviceLinesRes.json())
     } catch (error) {
       console.error("Failed to fetch lookup data:", error)
     }
@@ -458,7 +474,7 @@ export default function MandateTracker() {
         return <span className="text-gray-600 text-[11px]">{mandate.MandatePartner?.PartnerName ?? "—"}</span>
 
       case "Manager":
-        return <span className="text-gray-600 text-[11px]">{mandate.Manager?.ManagerName ?? "—"}</span>
+        return <span className="text-gray-600 text-[11px]">{mandate.MandateManager?.ManagerName ?? "—"}</span>
 
       case "AssignedStaff":
         return mandate.AssignedStaff ? (
@@ -795,6 +811,7 @@ export default function MandateTracker() {
               {filteredAndSorted.map(mandate => (
                 <tr
                   key={mandate.JobID}
+                  onClick={() => setSelectedMandate(mandate)}
                   className="border-b border-gray-100 hover:bg-blue-50/20 cursor-pointer"
                 >
                   {visibleCols.map(col => (
@@ -1023,6 +1040,21 @@ export default function MandateTracker() {
           onClick={() => setShowColumnPicker(false)}
         />
       )}
+    <MandateDetailPanel
+        mandate={selectedMandate}
+        onClose={() => setSelectedMandate(null)}
+        onUpdate={(updated) => {
+          setMandates(prev =>
+            prev.map(m => m.JobID === updated.JobID ? { ...m, ...updated } : m)
+          )
+          setSelectedMandate(null)
+        }}
+        staffList={staffList}
+        stages={stages}
+        serviceLines={serviceLines}
+        partners={partners}
+        managers={managers}
+      />
     </div>
   )
 }

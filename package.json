@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "seed": "ts-node prisma/seed.ts",
-    "postinstall": "prisma generate"
+    "postinstall": "npx prisma generate --schema=./prisma/schema.prisma"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

@@ -17,7 +17,7 @@ export async function GET(request: Request) {
 
     const where: Record<string, unknown> = {}
     if (taxYear)      where.TaxYear      = parseInt(taxYear)
-    if (jurisdiction) where.Jurisdiction = jurisdiction
+    if (jurisdiction) where.Country      = jurisdiction
     if (formType)     where.FormType     = formType
 
     const records = await prisma.tblTaxCalendar.findMany({

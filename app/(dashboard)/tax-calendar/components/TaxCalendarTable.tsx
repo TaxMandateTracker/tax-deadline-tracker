@@ -289,7 +289,7 @@ export default function TaxCalendarTable() {
             onChange={e => setFilterJurisdiction(e.target.value)}
             className="text-xs border border-gray-200 rounded px-2 py-1.5 focus:outline-none focus:border-orange-400"
           >
-            <option value="all">All jurisdictions</option>
+            <option value="all">All countries</option>
             <option value="US">US only</option>
             <option value="Canada">Canada only</option>
           </select>

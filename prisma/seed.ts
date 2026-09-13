@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client"
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const { PrismaClient } = require("@prisma/client")
 import { PrismaPg } from "@prisma/adapter-pg"
 import { Pool } from "pg"
 import * as dotenv from "dotenv"

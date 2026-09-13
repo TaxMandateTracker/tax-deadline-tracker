@@ -130,7 +130,8 @@ export async function GET(request: Request) {
 
     // For each mandate look up deadlines from TblTaxCalendar
     const enriched = await Promise.all(
-      mandates.map(async (mandate) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mandates.map(async (mandate: any) => {
         let taxCalendar = null
 
         if (mandate.FormType && mandate.FYE) {

@@ -30,35 +30,36 @@ export async function GET(request: Request) {
         orderBy: { OriginalDeadline: "asc" },
       })
 
-      const rows = mandates.map(m => ({
-        "Job ID":                m.JobID,
-        "Mandate Name":          m.JobName,
-        "Client Name":           m.Client?.ClientName ?? "",
-        "Client Jurisdiction":   m.Client?.ClientJurisdiction ?? "",
-        "Client FYE":            m.Client?.ClientFYEDate ? new Date(m.Client.ClientFYEDate).toISOString().split("T")[0] : "",
-        "FYE":                   m.FYE ? new Date(m.FYE).toISOString().split("T")[0] : "",
-        "Tax Year":              m.TaxYear,
-        "Form Type":             m.FormType,
-        "Entity Type":           m.EntityType,
-        "Country":               m.Country ?? "",
-        "Jurisdiction":          m.Jurisdiction ?? "",
-        "Service Line":          m.ServiceLine?.ServiceLine ?? "",
-        "Client Partner":        m.ClientPartner?.PartnerName ?? "",
-        "Mandate Partner":       m.MandatePartner?.PartnerName ?? "",
-        "Mandate Manager":       m.MandateManager?.ManagerName ?? "",
-        "Client Manager":        m.ClientManager?.ManagerName ?? "",
-        "Assigned Staff":        m.AssignedStaff ? `${m.AssignedStaff.FirstName} ${m.AssignedStaff.LastName}` : "",
-        "Assisting Staff":       m.AssistingStaff ? `${m.AssistingStaff.FirstName} ${m.AssistingStaff.LastName}` : "",
-        "Current Stage":         m.CurrentStage?.CurrentStage ?? "",
-        "Budget":                m.Budget ?? "",
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rows = mandates.map((m: any) => ({
+        "Job ID":                 m.JobID,
+        "Mandate Name":           m.JobName,
+        "Client Name":            m.Client?.ClientName ?? "",
+        "Client Jurisdiction":    m.Client?.ClientJurisdiction ?? "",
+        "Client FYE":             m.Client?.ClientFYEDate ? new Date(m.Client.ClientFYEDate).toISOString().split("T")[0] : "",
+        "FYE":                    m.FYE ? new Date(m.FYE).toISOString().split("T")[0] : "",
+        "Tax Year":               m.TaxYear,
+        "Form Type":              m.FormType,
+        "Entity Type":            m.EntityType,
+        "Country":                m.Country ?? "",
+        "Jurisdiction":           m.Jurisdiction ?? "",
+        "Service Line":           m.ServiceLine?.ServiceLine ?? "",
+        "Client Partner":         m.ClientPartner?.PartnerName ?? "",
+        "Mandate Partner":        m.MandatePartner?.PartnerName ?? "",
+        "Mandate Manager":        m.MandateManager?.ManagerName ?? "",
+        "Client Manager":         m.ClientManager?.ManagerName ?? "",
+        "Assigned Staff":         m.AssignedStaff ? `${m.AssignedStaff.FirstName} ${m.AssignedStaff.LastName}` : "",
+        "Assisting Staff":        m.AssistingStaff ? `${m.AssistingStaff.FirstName} ${m.AssistingStaff.LastName}` : "",
+        "Current Stage":          m.CurrentStage?.CurrentStage ?? "",
+        "Budget":                 m.Budget ?? "",
         "Client Commitment Date": m.ClientCommitmentDate ? new Date(m.ClientCommitmentDate).toISOString().split("T")[0] : "",
-        "Internal Due Date":     m.StaffDueDate ? new Date(m.StaffDueDate).toISOString().split("T")[0] : "",
-        "Legal Due Date":        m.OriginalDeadline ? new Date(m.OriginalDeadline).toISOString().split("T")[0] : "",
-        "Extended Due Date":     m.ExtensionDeadline ? new Date(m.ExtensionDeadline).toISOString().split("T")[0] : "",
-        "Disaster Due Date":     m.DisasterDeadline ? new Date(m.DisasterDeadline).toISOString().split("T")[0] : "",
-        "Extension Filed":       m.ExtensionFiled ? "Yes" : "No",
-        "Extension Filed Date":  m.ExtensionFiledDate ? new Date(m.ExtensionFiledDate).toISOString().split("T")[0] : "",
-        "Date Return Filed":     m.Completion ? new Date(m.Completion).toISOString().split("T")[0] : "",
+        "Internal Due Date":      m.StaffDueDate ? new Date(m.StaffDueDate).toISOString().split("T")[0] : "",
+        "Legal Due Date":         m.OriginalDeadline ? new Date(m.OriginalDeadline).toISOString().split("T")[0] : "",
+        "Extended Due Date":      m.ExtensionDeadline ? new Date(m.ExtensionDeadline).toISOString().split("T")[0] : "",
+        "Disaster Due Date":      m.DisasterDeadline ? new Date(m.DisasterDeadline).toISOString().split("T")[0] : "",
+        "Extension Filed":        m.ExtensionFiled ? "Yes" : "No",
+        "Extension Filed Date":   m.ExtensionFiledDate ? new Date(m.ExtensionFiledDate).toISOString().split("T")[0] : "",
+        "Date Return Filed":      m.Completion ? new Date(m.Completion).toISOString().split("T")[0] : "",
       }))
 
       return NextResponse.json({ type: "mandates", rows })
@@ -70,7 +71,8 @@ export async function GET(request: Request) {
         orderBy: { ClientName: "asc" },
       })
 
-      const rows = clients.map(c => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rows = clients.map((c: any) => ({
         "Client ID":    c.ClientID,
         "Client Name":  c.ClientName,
         "Jurisdiction": c.ClientJurisdiction,
@@ -91,7 +93,8 @@ export async function GET(request: Request) {
         orderBy: [{ LastName: "asc" }, { FirstName: "asc" }],
       })
 
-      const rows = staff.map(s => ({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rows = staff.map((s: any) => ({
         "Staff ID":   s.StaffID,
         "First Name": s.FirstName,
         "Last Name":  s.LastName,

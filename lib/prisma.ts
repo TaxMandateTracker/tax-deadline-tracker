@@ -3,7 +3,7 @@ import { PrismaPg } from "@prisma/adapter-pg"
 import { Pool } from "pg"
 
 const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
+  prisma: InstanceType<typeof PrismaClient> | undefined
 }
 
 function createPrismaClient() {

@@ -256,7 +256,7 @@ Tax Year:   {mandate.get('TaxYear', '')}
 {deadline_type}: {deadline_date}
 
 Please log in to Crowe Scheduling to update the status:
-http://localhost:3000/mandates
+https://crowe-scheduling.vercel.app/mandates
 
 ---
 This alert was sent because this mandate has a deadline approaching.

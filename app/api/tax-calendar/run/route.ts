@@ -13,8 +13,8 @@ export async function POST(request: Request) {
     const year = body.year || new Date().getFullYear()
 
     const GITHUB_TOKEN = process.env.GITHUB_TOKEN
-    const GITHUB_OWNER = "crowescheduling-prog"
-    const GITHUB_REPO  = "crowe-scheduling"
+    const GITHUB_OWNER = "TaxMandateTracker"
+    const GITHUB_REPO  = "tax-deadline-tracker"
     const WORKFLOW_ID  = "update-tax-calendar.yml"
 
     if (!GITHUB_TOKEN) {

@@ -4,29 +4,51 @@ import { createClient } from "@/lib/supabase/client"
 import { useState } from "react"
 
 export default function SignInPage() {
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail]       = useState("")
+  const [otp, setOtp]           = useState("")
+  const [loading, setLoading]   = useState(false)
+  const [codeSent, setCodeSent] = useState(false)
+  const [error, setError]       = useState("")
   const supabase = createClient()
 
-  async function signInWithGoogle() {
+  async function sendOTP() {
+    setError("")
+
+    // Restrict to @crowe.com emails only
+    if (!email.toLowerCase().endsWith("@crowebgk.com")) {
+      setError("Only @crowebgk.com email addresses are allowed.")
+      return
+    }
+
     setLoading(true)
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email.toLowerCase(),
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        shouldCreateUser: false,
       },
     })
+
+    if (error) {
+      setError("Could not send code. Please check your email address.")
+    } else {
+      setCodeSent(true)
+    }
     setLoading(false)
   }
 
-  async function signInWithMicrosoft() {
+  async function verifyOTP() {
+    setError("")
     setLoading(true)
-    await supabase.auth.signInWithOAuth({
-      provider: "azure",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-        scopes: "email",
-      },
+
+    const { error } = await supabase.auth.verifyOtp({
+      email: email.toLowerCase(),
+      token: otp,
+      type: "email",
     })
+
+    if (error) {
+      setError("Invalid or expired code. Please try again.")
+    }
     setLoading(false)
   }
 
@@ -36,45 +58,89 @@ export default function SignInPage() {
 
         <div className="mb-8 text-center">
           <h1 className="text-2xl font-semibold text-gray-900">
-            Crowe Scheduling
+            Tax Deadline Tracker
           </h1>
           <p className="text-sm text-gray-500 mt-2">
-            AI Scheduling & Engagement Management
+            Crowe BGK — Secure Access
           </p>
         </div>
 
-        <div className="flex flex-col gap-3">
-          <button
-            onClick={signInWithGoogle}
-            disabled={loading}
-            className="flex items-center justify-center gap-3 w-full border border-gray-200 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18">
-              <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
-              <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
-              <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18z"/>
-              <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
-            </svg>
-            {loading ? "Signing in..." : "Continue with Google"}
-          </button>
+        {!codeSent ? (
+          <div className="flex flex-col gap-4">
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Work Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="yourname@crowebgk.com"
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-orange-400"
+                onKeyDown={e => e.key === "Enter" && sendOTP()}
+                autoFocus
+              />
+            </div>
 
-          <button
-            onClick={signInWithMicrosoft}
-            disabled={loading}
-            className="flex items-center justify-center gap-3 w-full border border-gray-200 rounded-lg px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            <svg width="18" height="18" viewBox="0 0 18 18">
-              <path fill="#F25022" d="M1 1h7.5v7.5H1z"/>
-              <path fill="#7FBA00" d="M9.5 1H17v7.5H9.5z"/>
-              <path fill="#00A4EF" d="M1 9.5h7.5V17H1z"/>
-              <path fill="#FFB900" d="M9.5 9.5H17V17H9.5z"/>
-            </svg>
-            {loading ? "Signing in..." : "Continue with Microsoft"}
-          </button>
-        </div>
+            {error && (
+              <p className="text-xs text-red-500">{error}</p>
+            )}
+
+            <button
+              onClick={sendOTP}
+              disabled={loading || !email}
+              className="w-full bg-orange-500 text-white rounded-lg px-4 py-3 text-sm font-medium hover:bg-orange-600 disabled:opacity-50 transition-colors"
+            >
+              {loading ? "Sending..." : "Send Sign-In Code"}
+            </button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <p className="text-sm text-gray-600 text-center">
+              A 6-digit code was sent to:
+              <br />
+              <span className="font-medium text-gray-900">{email}</span>
+            </p>
+
+            <div>
+              <label className="text-xs text-gray-500 block mb-1">
+                Enter 6-digit code
+              </label>
+              <input
+                type="text"
+                value={otp}
+                onChange={e => setOtp(e.target.value)}
+                placeholder="123456"
+                maxLength={6}
+                className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-center tracking-widest text-lg focus:outline-none focus:border-orange-400"
+                onKeyDown={e => e.key === "Enter" && verifyOTP()}
+                autoFocus
+              />
+            </div>
+
+            {error && (
+              <p className="text-xs text-red-500">{error}</p>
+            )}
+
+            <button
+              onClick={verifyOTP}
+              disabled={loading || otp.length !== 6}
+              className="w-full bg-orange-500 text-white rounded-lg px-4 py-3 text-sm font-medium hover:bg-orange-600 disabled:opacity-50 transition-colors"
+            >
+              {loading ? "Verifying..." : "Sign In"}
+            </button>
+
+            <button
+              onClick={() => { setCodeSent(false); setOtp(""); setError("") }}
+              className="text-xs text-gray-400 hover:text-gray-600 text-center"
+            >
+              Use a different email
+            </button>
+          </div>
+        )}
 
         <p className="text-xs text-gray-400 text-center mt-8">
-          For accounting firms — secure, private, encrypted
+          Access restricted to Crowe BGK staff only
         </p>
       </div>
     </div>

@@ -25,7 +25,7 @@ export default function SignInPage() {
       email: email.toLowerCase(),
       options: {
         shouldCreateUser: false,
-        emailRedirectTo: undefined,
+        emailRedirectTo: `${window.location.origin}/auth/callback`,
       },
     })
 

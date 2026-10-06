@@ -769,7 +769,7 @@ def calculate_941_deadlines(
             "DisasterName":      None,
             "DisasterEligible":  "No",
             "DisasterLocation":  None,
-            "DisasterCounties":  None,
+            "DisasterZipCodes":  None,
             "DisasterDeadline":  None,
             "SourceType":        source_type,
             "SourceURL":         source_url,
@@ -791,7 +791,7 @@ def calculate_941_deadlines(
                 "DisasterName":      d.get("name"),
                 "DisasterEligible":  "Yes",
                 "DisasterLocation":  d.get("location"),
-                "DisasterCounties":  d.get("counties"),
+                "DisasterZipCodes":  d.get("counties"),
                 "DisasterDeadline":  d["extended_to"],
                 "SourceType":        source_type,
                 "SourceURL":         source_url,
@@ -1838,7 +1838,7 @@ def test_script_3():
     #     print(f"Disaster Name:      {result['DisasterName']}")
     #     print(f"Disaster Eligible:  {result['DisasterEligible']}")
     #     print(f"Disaster Location:  {result['DisasterLocation']}")
-    #     print(f"Disaster Counties:  {result['DisasterCounties']}")
+    #     print(f"Disaster Counties:  {result['DisasterZipCodes']}")
     #     print(f"Disaster Deadline:  {result['DisasterDeadline']}")
     #     print(f"Source Type:        {result['SourceType']}")
     #     print(f"Source URL:         {result['SourceURL']}")
@@ -1860,7 +1860,7 @@ def test_script_3():
         "DisasterName",
         "DisasterEligible",
         "DisasterLocation",
-        "DisasterCounties",
+        "DisasterZipCodes",
         "DisasterDeadline",
         "OriginalDeadline",
         "ExtensionDeadline",
@@ -1897,7 +1897,7 @@ def test_script_3():
             str(result["DisasterName"]       or ""),
             str(result["DisasterEligible"]   or ""),
             str(result["DisasterLocation"]   or ""),
-            str(result["DisasterCounties"]   or ""),
+            str(result["DisasterZipCodes"]   or ""),
             str(result["DisasterDeadline"]   or ""),
             str(result["OriginalDeadline"]   or ""),
             str(result["ExtensionDeadline"]  or ""),
@@ -1991,7 +1991,7 @@ def insert_to_supabase(rows):
                     "DisasterName":      row.get("DisasterName"),
                     "DisasterEligible":  row.get("DisasterEligible", "No"),
                     "DisasterLocation":  row.get("DisasterLocation"),
-                    "DisasterCounties":  row.get("DisasterCounties"),
+                    "DisasterZipCodes":  row.get("DisasterZipCodes"),
                     "DisasterDeadline":  to_date(row.get("DisasterDeadline")),
                     "OriginalDeadline":  to_date(row.get("OriginalDeadline")),
                     "ExtensionDeadline": to_date(row.get("ExtensionDeadline")),

@@ -1438,7 +1438,85 @@ def extract_disaster_location(html):
 
     return state, counties
 
+def get_zips_from_county_names(state, counties_text):
+    """
+    Converts IRS county names to zip codes using the CSV mapping.
+    counties_text is a comma-separated string of county names.
+    Returns comma-separated zip codes or None.
+    """
+    try:
+        state_abbrev = {
+            "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ",
+            "Arkansas": "AR", "California": "CA", "Colorado": "CO",
+            "Connecticut": "CT", "Delaware": "DE", "Florida": "FL",
+            "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
+            "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",
+            "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA",
+            "Maine": "ME", "Maryland": "MD", "Massachusetts": "MA",
+            "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+            "Missouri": "MO", "Montana": "MT", "Nebraska": "NE",
+            "Nevada": "NV", "New Hampshire": "NH", "New Jersey": "NJ",
+            "New Mexico": "NM", "New York": "NY", "North Carolina": "NC",
+            "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+            "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI",
+            "South Carolina": "SC", "South Dakota": "SD",
+            "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+            "Vermont": "VT", "Virginia": "VA", "Washington": "WA",
+            "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY",
+            "District of Columbia": "DC", "Puerto Rico": "PR",
+            "Guam": "GU", "Virgin Islands": "VI",
+            "American Samoa": "AS",
+            "Northern Mariana Islands": "MP",
+        }.get(state)
 
+        if not state_abbrev:
+            return None
+
+        zip_map  = load_zip_county_map()
+        all_zips = []
+
+        # Split county names by comma
+        county_list = [
+            c.strip() for c in counties_text.split(",")
+            if c.strip()
+        ]
+
+        for county in county_list:
+            area_clean = county.strip().lower()
+
+            zips = []
+
+            # Direct match
+            key  = (state_abbrev, area_clean)
+            zips = zip_map.get(key, [])
+
+            # Louisiana parish suffix
+            if not zips and state_abbrev == "LA":
+                key  = (state_abbrev, area_clean + " parish")
+                zips = zip_map.get(key, [])
+
+            # Alaska borough/census area suffix
+            if not zips and state_abbrev == "AK":
+                for suffix in [
+                    " borough", " census area",
+                    " municipality", " city and borough",
+                ]:
+                    key  = (state_abbrev, area_clean + suffix)
+                    zips = zip_map.get(key, [])
+                    if zips:
+                        break
+
+            if zips:
+                all_zips.extend(zips[:5])
+
+        if all_zips:
+            unique_zips = list(dict.fromkeys(all_zips))[:200]
+            return ", ".join(unique_zips)
+
+        return None
+
+    except Exception as e:
+        return None
 # ============================================================
 # BUILD LIVE DISASTER CACHE — fetched ONCE per script run
 # ============================================================
@@ -1595,7 +1673,15 @@ def get_live_disaster_cache():
             disaster_name = extract_disaster_name(clean)
             dates         = extract_dates_from_text(clean)
 
-            zip_codes = get_fema_zip_codes(state, deadline)
+            # Step 1: Try to get zip codes from IRS county names
+            if counties:
+                zip_codes = get_zips_from_county_names(
+                    state, counties
+                )
+            else:
+                # Step 2: Fall back to FEMA only if IRS has no counties
+                zip_codes = get_fema_zip_codes(state, deadline)
+                
             _LIVE_DISASTERS_CACHE.append({
                 "name":        disaster_name or "Current Disaster",
                 "location":    state,

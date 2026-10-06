@@ -1262,9 +1262,9 @@ def extract_county_list(text):
 
     # Pattern 0: "islands of X, Y, and Z" (NMI style)
     match = re.search(
-        r"(?:islands|island)\s+of\s+"
+        r"(?:on\s+the\s+)?(?:islands|island)\s+of\s+"
         r"([A-Za-z][A-Za-z\s,\.'\-/]+?)"
-        r"(?:\s+qualify|\s+are\s+eligible|\.|$)",
+        r"(?:\s+qualify|\s+are\s+eligible|\.|,|\n)",
         text, re.IGNORECASE
     )
     if match:

@@ -1267,11 +1267,11 @@ def extract_county_list(text):
         if bavi_match:
             print(f"   BAVI TEXT: {bavi_match.group(0)}")
 
-   # Pattern 0: "islands of X, Y, and Z" (NMI style)
+    # Pattern 0: "on the islands of X, Y, and Z" (NMI style)
     match = re.search(
-        r"(?:on\s+the\s+)?(?:islands|island)\s+of\s+"
+        r"(?:business|reside|live)\s+on\s+the\s+islands\s+of\s+"
         r"([A-Za-z][A-Za-z\s,\.'\-/]+?)"
-        r"(?:\s+qualify|\s+are\s+eligible|\.|,|\n)",
+        r"(?:\s+qualify|\s+are\s+eligible|\.|$)",
         text, re.IGNORECASE
     )
     if match:

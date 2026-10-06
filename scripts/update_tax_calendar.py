@@ -1511,38 +1511,37 @@ def get_fema_zip_codes(state, disaster_deadline):
                 if area and area not in areas:
                     areas.append(area)
 
-        if not areas:
-            return None
-
-        # Convert area names to zip codes using CSV mapping
-        zip_map    = load_zip_county_map()
-        all_zips   = []
-
         for area in areas:
-            # Clean area name for lookup
-            area_clean = re.sub(
-                r'\s*\(.*?\)', '', area
-            ).strip().lower()
+            # Clean area name - remove parenthetical suffixes from FEMA
+            area_clean = re.sub(r'\s*\(.*?\)', '', area).strip().lower()
 
-            # Try direct match first
-            key  = (state_abbrev, area_clean)
+            zips = []
+
+            # Try direct match first (works for most states)
+            key = (state_abbrev, area_clean)
             zips = zip_map.get(key, [])
 
-            # Louisiana uses "Parish" suffix in CSV
+            # Louisiana: CSV stores "Jefferson Parish" not "Jefferson"
             if not zips and state_abbrev == "LA":
                 key = (state_abbrev, area_clean + " parish")
                 zips = zip_map.get(key, [])
 
-            # Alaska uses "Borough" suffix in CSV
+            # Alaska: CSV stores "Anchorage Borough", "Bethel Census Area" etc
             if not zips and state_abbrev == "AK":
-                key = (state_abbrev, area_clean + " borough")
-                zips = zip_map.get(key, [])
-                if not zips:
-                    key = (state_abbrev, area_clean + " census area")
+                for suffix in [
+                    " borough",
+                    " census area",
+                    " municipality",
+                    " city and borough",
+                    " census area, alaska",
+                ]:
+                    key = (state_abbrev, area_clean + suffix)
                     zips = zip_map.get(key, [])
+                    if zips:
+                        break
 
             if zips:
-                all_zips.extend(zips[:5])  # Max 5 zips per area
+                all_zips.extend(zips[:5])
 
         if all_zips:
             # Remove duplicates and limit total

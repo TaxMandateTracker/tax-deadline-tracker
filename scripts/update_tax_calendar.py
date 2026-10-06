@@ -1118,29 +1118,47 @@ def extract_dates_from_text(text):
 def extract_disaster_deadline(text):
     if not text:
         return None
+
+    # Month patterns - both full and abbreviated
+    month_pattern = (
+        r"(January|February|March|April|May|June|July|"
+        r"August|September|October|November|December|"
+        r"Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)"
+        r"\.?\s+(\d{1,2}),?\s+(\d{4})"
+    )
+
     patterns = [
-        r"until\s+(January|February|March|April|May|June|July|"
-        r"August|September|October|November|December)"
-        r"\s+(\d{1,2}),\s+(\d{4})",
-        r"postponed\s+until\s+(January|February|March|April|May|June|July|"
-        r"August|September|October|November|December)"
-        r"\s+(\d{1,2}),\s+(\d{4})",
-        r"deadline.*?(January|February|March|April|May|June|July|"
-        r"August|September|October|November|December)"
-        r"\s+(\d{1,2}),\s+(\d{4})"
+        r"until\s+" + month_pattern,
+        r"postponed\s+(?:to|until)\s+" + month_pattern,
+        r"have\s+until\s+" + month_pattern,
+        r"deadline.*?(?:is|of|to)\s+" + month_pattern,
+        r"extended\s+to\s+" + month_pattern,
     ]
+
+    month_map = {
+        "jan": "January", "feb": "February", "mar": "March",
+        "apr": "April", "may": "May", "jun": "June",
+        "jul": "July", "aug": "August", "sep": "September",
+        "sept": "September", "oct": "October", "nov": "November",
+        "dec": "December"
+    }
+
     for pattern in patterns:
         match = re.search(pattern, text, re.IGNORECASE | re.DOTALL)
         if match:
             try:
+                month = match.group(1).strip().rstrip(".")
+                # Normalize abbreviated months
+                month_norm = month_map.get(month.lower(), month)
+                day   = match.group(2)
+                year  = match.group(3)
                 return datetime.strptime(
-                    f"{match.group(1)} {match.group(2)} {match.group(3)}",
+                    f"{month_norm} {day} {year}",
                     "%B %d %Y"
                 ).date()
             except Exception:
                 pass
     return None
-
 
 def clean_html_text(html):
     if not html:
@@ -1681,7 +1699,7 @@ def get_live_disaster_cache():
             else:
                 # Step 2: Fall back to FEMA only if IRS has no counties
                 zip_codes = get_fema_zip_codes(state, deadline)
-                
+
             _LIVE_DISASTERS_CACHE.append({
                 "name":        disaster_name or "Current Disaster",
                 "location":    state,

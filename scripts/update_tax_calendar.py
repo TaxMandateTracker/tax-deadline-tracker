@@ -1164,42 +1164,138 @@ def extract_disaster_name(text):
 
 def extract_county_list(text):
     """
-    Extracts county list from IRS disaster notice.
-    Returns county list string or None if all counties.
+    Extracts the list of affected areas from IRS disaster notices.
+    Handles all US area types: counties, boroughs, parishes,
+    municipalities, census areas, attendance areas, districts etc.
+    Returns a comma-separated string or None if entire state affected.
     """
-    # All counties in the state
-    all_match = re.search(
-        r"all\s+\d+\s+counties|all\s+counties|"
-        r"statewide|entire\s+state",
+
+    # Check if entire state is affected — return None
+    all_areas_match = re.search(
+        r"all\s+\d+\s+\w+|"
+        r"all\s+(?:counties|boroughs|parishes|municipalities|areas)|"
+        r"statewide|entire\s+state|whole\s+state|all\s+areas",
         text, re.IGNORECASE
     )
-    if all_match:
+    if all_areas_match:
         return None
 
-    # Specific counties listed
-    county_patterns = [
-        r"reside or have a business in\s+"
-        r"([A-Za-z\s,\.'-]+?)\s+counties\s+qualify",
-        r"located in\s+"
-        r"([A-Za-z\s,\.'-]+?)\s+counties",
-        r"in\s+"
-        r"([A-Za-z\s,\.'-]+?)\s+counties\s+(?:qualify|are eligible)",
-    ]
+    # All possible US area terminology
+    area_term = (
+        r"(?:counties|county|boroughs|borough|parishes|parish|"
+        r"municipalities|municipality|census\s+areas|census\s+area|"
+        r"regional\s+educational\s+attendance\s+areas|"
+        r"regional\s+educational\s+attendance\s+area|"
+        r"attendance\s+areas|attendance\s+area|"
+        r"districts|district|regions|region|"
+        r"divisions|division|areas|area|"
+        r"independent\s+cities|independent\s+city|"
+        r"municipios|municipio|"
+        r"commonwealths|commonwealth)"
+    )
 
-    for pattern in county_patterns:
-        match = re.search(pattern, text, re.IGNORECASE)
-        if match:
-            counties = match.group(1).strip()
-            counties = re.sub(
-                r',?\s+and\s+', ', ', counties
-            ).strip()
-            counties = re.sub(r'\s+', ' ', counties)
-            if len(counties) > 1000:
-                continue
-            return counties
+    # Pattern 1: "following counties/boroughs/parishes: X, Y, Z"
+    match = re.search(
+        r"following\s+" + area_term + r"\s*[:\-]\s*"
+        r"([A-Za-z][A-Za-z\s,\.'\-/]+?)(?:\.|;|\n\n|$)",
+        text, re.IGNORECASE
+    )
+    if match:
+        result = _clean_area_list(match.group(1))
+        if result:
+            return result
+
+    # Pattern 2: "reside or have a business in X, Y, and Z counties"
+    match = re.search(
+        r"(?:reside|live|located|businesses?)\s+(?:or\s+have\s+a\s+business\s+)?in\s+"
+        r"([A-Za-z][A-Za-z\s,\.'\-/]+?)\s+" + area_term,
+        text, re.IGNORECASE
+    )
+    if match:
+        result = _clean_area_list(match.group(1))
+        if result:
+            return result
+
+    # Pattern 3: "in X, Y, and Z counties qualify/are eligible"
+    match = re.search(
+        r"\bin\s+([A-Za-z][A-Za-z\s,\.'\-/]+?)\s+" + area_term +
+        r"\s+(?:qualify|are\s+eligible|will\s+receive)",
+        text, re.IGNORECASE
+    )
+    if match:
+        result = _clean_area_list(match.group(1))
+        if result:
+            return result
+
+    # Pattern 4: "X, Y, and Z counties in [state]"
+    match = re.search(
+        r"([A-Za-z][A-Za-z\s,\.'\-/]+?)\s+" + area_term +
+        r"\s+(?:in|of)\s+[A-Za-z\s]+",
+        text, re.IGNORECASE
+    )
+    if match:
+        result = _clean_area_list(match.group(1))
+        if result:
+            return result
+
+    # Pattern 5: "taxpayers in X, Y, Z counties"
+    match = re.search(
+        r"taxpayers\s+in\s+([A-Za-z][A-Za-z\s,\.'\-/]+?)\s+" + area_term,
+        text, re.IGNORECASE
+    )
+    if match:
+        result = _clean_area_list(match.group(1))
+        if result:
+            return result
+
+    # Pattern 6: comma-separated list ending with area term
+    match = re.search(
+        r"([A-Za-z][A-Za-z\s]*"
+        r"(?:,\s*(?:and\s+)?[A-Za-z][A-Za-z\s]*){2,})\s+" + area_term,
+        text, re.IGNORECASE
+    )
+    if match:
+        result = _clean_area_list(match.group(1))
+        if result:
+            return result
 
     return None
 
+
+def _clean_area_list(text):
+    """
+    Cleans and normalizes a list of area names.
+    Returns cleaned string or None if invalid.
+    """
+    if not text:
+        return None
+
+    # Remove leading/trailing whitespace and punctuation
+    text = text.strip(' ,.\n\r\t')
+
+    # Normalize "and" separators to commas
+    text = re.sub(r',?\s+and\s+', ', ', text)
+
+    # Normalize multiple spaces
+    text = re.sub(r'\s+', ' ', text)
+
+    # Remove any trailing "and"
+    text = re.sub(r',?\s+and\s*$', '', text)
+
+    # Skip if too short (not a real list)
+    if len(text) < 3:
+        return None
+
+    # Skip if too long (probably grabbed wrong text)
+    if len(text) > 2000:
+        return None
+
+    # Skip if it looks like a full sentence (too many words)
+    word_count = len(text.split())
+    if word_count > 100:
+        return None
+
+    return text
 
 # ============================================================
 # EXTRACT DISASTER STATE — using known US state list

@@ -33102,3 +33102,6 @@ state_fips,state,state_abbr,zipcode,county,city
 56,Wyoming,WY,83128,Lincoln,Alpine
 56,Wyoming,WY,831HH,Lincoln,Zcta 831hh
 56,Wyoming,WY,831XX,Lincoln,Zcta 831xx
+66,Northern Mariana Islands,MP,96950,Saipan,Saipan
+66,Northern Mariana Islands,MP,96951,Rota,Rota
+66,Northern Mariana Islands,MP,96952,Tinian,Tinian

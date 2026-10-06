@@ -1394,7 +1394,128 @@ def extract_disaster_location(html):
 # ============================================================
 # BUILD LIVE DISASTER CACHE — fetched ONCE per script run
 # ============================================================
+def get_fema_zip_codes(state, disaster_deadline):
+    """
+    Fetches zip codes for disaster-affected areas from FEMA API.
+    Returns comma-separated zip codes or None if not found.
+    """
+    try:
+        # Map state name to FEMA state abbreviation
+        state_abbrev = {
+            "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ",
+            "Arkansas": "AR", "California": "CA", "Colorado": "CO",
+            "Connecticut": "CT", "Delaware": "DE", "Florida": "FL",
+            "Georgia": "GA", "Hawaii": "HI", "Idaho": "ID",
+            "Illinois": "IL", "Indiana": "IN", "Iowa": "IA",
+            "Kansas": "KS", "Kentucky": "KY", "Louisiana": "LA",
+            "Maine": "ME", "Maryland": "MD", "Massachusetts": "MA",
+            "Michigan": "MI", "Minnesota": "MN", "Mississippi": "MS",
+            "Missouri": "MO", "Montana": "MT", "Nebraska": "NE",
+            "Nevada": "NV", "New Hampshire": "NH", "New Jersey": "NJ",
+            "New Mexico": "NM", "New York": "NY", "North Carolina": "NC",
+            "North Dakota": "ND", "Ohio": "OH", "Oklahoma": "OK",
+            "Oregon": "OR", "Pennsylvania": "PA", "Rhode Island": "RI",
+            "South Carolina": "SC", "South Dakota": "SD",
+            "Tennessee": "TN", "Texas": "TX", "Utah": "UT",
+            "Vermont": "VT", "Virginia": "VA", "Washington": "WA",
+            "West Virginia": "WV", "Wisconsin": "WI", "Wyoming": "WY",
+            "District of Columbia": "DC", "Puerto Rico": "PR",
+            "Guam": "GU", "Virgin Islands": "VI",
+            "American Samoa": "AS",
+            "Northern Mariana Islands": "MP",
+        }.get(state)
 
+        if not state_abbrev:
+            return None
+
+        # Get year from disaster deadline
+        year = disaster_deadline.year if hasattr(
+            disaster_deadline, 'year'
+        ) else datetime.now().year
+
+        # Query FEMA disaster declarations API
+        url = (
+            "https://www.fema.gov/api/open/v2/"
+            "disasterDeclarationsSummaries"
+            f"?state={state_abbrev}"
+            f"&declarationDateStart={year-1}-01-01"
+            f"&declarationDateEnd={year+1}-12-31"
+            "&$format=json"
+            "&$top=10"
+        )
+
+        response = SESSION.get(url, timeout=15)
+        if response.status_code != 200:
+            return None
+
+        data = response.json()
+        declarations = data.get(
+            "DisasterDeclarationsSummaries", []
+        )
+
+        if not declarations:
+            return None
+
+        # Get designated areas (counties) from FEMA
+        all_areas = []
+        for decl in declarations[:3]:  # Check top 3 declarations
+            disaster_num = decl.get("disasterNumber")
+            if not disaster_num:
+                continue
+
+            # Get designated areas for this disaster
+            areas_url = (
+                "https://www.fema.gov/api/open/v2/"
+                "registrationIntakeIndividualsHouseholdPrograms"
+                f"?disasterNumber={disaster_num}"
+                "&$format=json"
+                "&$top=100"
+                "&$select=county,stateNumberCode"
+            )
+
+            areas_response = SESSION.get(areas_url, timeout=15)
+            if areas_response.status_code != 200:
+                continue
+
+            areas_data = areas_response.json()
+            areas = areas_data.get(
+                "RegistrationIntakeIndividualsHouseholdPrograms",
+                []
+            )
+
+            for area in areas:
+                county = area.get("county", "")
+                if county and county not in all_areas:
+                    all_areas.append(county)
+
+        if not all_areas:
+            return None
+
+        # Convert county names to zip codes using free API
+        zip_list = []
+        for county in all_areas[:20]:  # Limit to 20 counties
+            zip_url = (
+                f"https://api.zippopotam.us/us/{state_abbrev}/"
+                f"{county.lower().replace(' ', '-')}"
+            )
+            zip_response = SESSION.get(zip_url, timeout=10)
+            if zip_response.status_code == 200:
+                zip_data = zip_response.json()
+                places = zip_data.get("places", [])
+                for place in places[:5]:  # Max 5 zips per county
+                    zip_code = place.get("post code", "")
+                    if zip_code and zip_code not in zip_list:
+                        zip_list.append(zip_code)
+
+        if zip_list:
+            return ", ".join(zip_list)
+
+        return None
+
+    except Exception as e:
+        print(f"   FEMA zip lookup error: {e}")
+        return None
+    
 def get_live_disaster_cache():
     global _LIVE_DISASTERS_CACHE
 
@@ -1429,10 +1550,11 @@ def get_live_disaster_cache():
             disaster_name = extract_disaster_name(clean)
             dates         = extract_dates_from_text(clean)
 
+            zip_codes = get_fema_zip_codes(state, deadline)
             _LIVE_DISASTERS_CACHE.append({
                 "name":        disaster_name or "Current Disaster",
                 "location":    state,
-                "counties":    counties,
+                "zip_codes":   zip_codes,
                 "extended_to": deadline,
                 "dates":       dates,
                 "source_url":  url
@@ -1610,7 +1732,7 @@ def process_tax_rule(form_config, fye):
         "DisasterName":      None,
         "DisasterEligible":  "No",
         "DisasterLocation":  None,
-        "DisasterCounties":  None,
+        "DisasterZipCodes":  None,
         "DisasterDeadline":  None,
         "SourceType":        source_type,
         "SourceURL":         source_url,
@@ -1633,7 +1755,7 @@ def process_tax_rule(form_config, fye):
             "DisasterName":      d.get("name"),
             "DisasterEligible":  "Yes",
             "DisasterLocation":  d.get("location"),
-            "DisasterCounties":  d.get("counties"),
+            "DisasterZipCodes":  d.get("zip_codes"),
             "DisasterDeadline":  d["extended_to"],
             "SourceType":        source_type,
             "SourceURL":         source_url,

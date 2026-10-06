@@ -1395,6 +1395,7 @@ def extract_disaster_location(html):
 # BUILD LIVE DISASTER CACHE — fetched ONCE per script run
 # ============================================================
 def get_fema_zip_codes(state, disaster_deadline):
+    print(f"   🔍 FEMA lookup for: {state}")
     """
     Fetches zip codes for disaster-affected areas from FEMA API.
     Returns comma-separated zip codes or None if not found.

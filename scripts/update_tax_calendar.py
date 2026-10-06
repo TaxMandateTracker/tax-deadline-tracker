@@ -1433,16 +1433,13 @@ def get_fema_zip_codes(state, disaster_deadline):
             disaster_deadline, 'year'
         ) else datetime.now().year
 
-        # Use correct FEMA API URL with capital D
+        # Use correct FEMA API endpoint for disaster declarations
         url = (
             "https://www.fema.gov/api/open/v2/"
             "DisasterDeclarationsSummaries"
-            f"?state={state_abbrev}"
-            f"&declarationDateStart={year-1}-01-01"
-            f"&declarationDateEnd={year+1}-12-31"
+            f"?$filter=state%20eq%20'{state_abbrev}'"
             "&$format=json"
             "&$top=100"
-            "&$orderby=declarationDate%20desc"
         )
 
         print(f"   🌐 FEMA URL: {url}")

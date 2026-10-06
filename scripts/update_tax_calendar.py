@@ -1510,7 +1510,10 @@ def get_fema_zip_codes(state, disaster_deadline):
                 area = area.strip()
                 if area and area not in areas:
                     areas.append(area)
-
+        # Convert area names to zip codes using CSV mapping
+        zip_map  = load_zip_county_map()
+        all_zips = []
+        
         for area in areas:
             # Clean area name - remove parenthetical suffixes from FEMA
             area_clean = re.sub(r'\s*\(.*?\)', '', area).strip().lower()

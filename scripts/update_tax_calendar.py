@@ -1248,7 +1248,7 @@ def extract_county_list(text):
 
     # All possible US area terminology
     area_term = (
-        r"(?:counties|county|boroughs|borough|parishes|parish|"
+        r"(?:islands|island|counties|county|boroughs|borough|parishes|parish|"
         r"municipalities|municipality|census\s+areas|census\s+area|"
         r"regional\s+educational\s+attendance\s+areas|"
         r"regional\s+educational\s+attendance\s+area|"

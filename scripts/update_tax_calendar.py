@@ -62,6 +62,9 @@ def load_zip_county_map():
 
                 if not state_abbr or not county or not zipcode:
                     continue
+                # Skip placeholder zip codes (ZCTAs like 394HH, 394XX)
+                if not zipcode.isdigit():
+                    continue
 
                 key = (state_abbr, county)
                 if key not in _ZIP_COUNTY_MAP:
@@ -1513,7 +1516,7 @@ def get_fema_zip_codes(state, disaster_deadline):
         # Convert area names to zip codes using CSV mapping
         zip_map  = load_zip_county_map()
         all_zips = []
-        
+
         for area in areas:
             # Clean area name - remove parenthetical suffixes from FEMA
             area_clean = re.sub(r'\s*\(.*?\)', '', area).strip().lower()

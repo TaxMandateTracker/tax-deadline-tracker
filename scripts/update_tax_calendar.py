@@ -1297,6 +1297,9 @@ def _clean_area_list(text):
         'reside', 'postpone', 'deadline', 'declaration',
         'permits', 'filing', 'payment', 'relief',
         'disaster area', 'the irs', 'announces',
+        'federally declared', 'declared disaster',
+        'tax relief', 'winds', 'tornadoes', 'flooding',
+        'multiple', 'hurricane', 'wildfire', 'earthquake',
     ]
     text_lower = text.lower()
     for indicator in sentence_indicators:

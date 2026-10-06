@@ -1399,7 +1399,6 @@ def get_fema_zip_codes(state, disaster_deadline):
     Fetches affected areas from FEMA API.
     Returns comma-separated area names or None if not found.
     """
-    print(f"   🔍 FEMA lookup for: {state}")
     try:
         state_abbrev = {
             "Alabama": "AL", "Alaska": "AK", "Arizona": "AZ",
@@ -1426,7 +1425,6 @@ def get_fema_zip_codes(state, disaster_deadline):
         }.get(state)
 
         if not state_abbrev:
-            print(f"   ❌ No state abbrev for: {state}")
             return None
 
         year = disaster_deadline.year if hasattr(
@@ -1442,16 +1440,13 @@ def get_fema_zip_codes(state, disaster_deadline):
             "&$top=100"
         )
 
-        print(f"   🌐 FEMA URL: {url}")
         response = SESSION.get(url, timeout=15)
-        print(f"   📡 FEMA status: {response.status_code}")
 
         if response.status_code != 200:
             return None
 
         data = response.json()
         declarations = data.get("DisasterDeclarationsSummaries", [])
-        print(f"   📋 FEMA declarations found: {len(declarations)}")
 
         if not declarations:
             return None
@@ -1475,11 +1470,9 @@ def get_fema_zip_codes(state, disaster_deadline):
             return None
 
         result = ", ".join(areas)
-        print(f"   ✅ FEMA areas: {result[:100]}...")
         return result
 
     except Exception as e:
-        print(f"   ❌ FEMA error: {e}")
         return None
 
 

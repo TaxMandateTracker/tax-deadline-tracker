@@ -1442,7 +1442,7 @@ def get_fema_zip_codes(state, disaster_deadline):
             f"&declarationDateEnd={year+1}-12-31"
             "&$format=json"
             "&$top=100"
-            "&$orderby=declarationDate desc"
+            "&$orderby=declarationDate%20desc"
         )
 
         print(f"   🌐 FEMA URL: {url}")
@@ -1484,8 +1484,8 @@ def get_fema_zip_codes(state, disaster_deadline):
     except Exception as e:
         print(f"   ❌ FEMA error: {e}")
         return None
-    
-        
+
+
 def get_live_disaster_cache():
     global _LIVE_DISASTERS_CACHE
 

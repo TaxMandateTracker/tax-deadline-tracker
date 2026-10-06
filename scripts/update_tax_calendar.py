@@ -1260,6 +1260,18 @@ def extract_county_list(text):
         r"commonwealths|commonwealth)"
     )
 
+    # Pattern 0: "islands of X, Y, and Z" (NMI style)
+    match = re.search(
+        r"(?:islands|island)\s+of\s+"
+        r"([A-Za-z][A-Za-z\s,\.'\-/]+?)"
+        r"(?:\s+qualify|\s+are\s+eligible|\.|$)",
+        text, re.IGNORECASE
+    )
+    if match:
+        result = _clean_area_list(match.group(1))
+        if result:
+            return result
+
     # Pattern 1: "following counties/boroughs/parishes: X, Y, Z"
     match = re.search(
         r"following\s+" + area_term + r"\s*[:\-]\s*"

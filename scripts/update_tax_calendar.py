@@ -1524,9 +1524,22 @@ def get_fema_zip_codes(state, disaster_deadline):
                 r'\s*\(.*?\)', '', area
             ).strip().lower()
 
-            # Try with state abbreviation
+            # Try direct match first
             key  = (state_abbrev, area_clean)
             zips = zip_map.get(key, [])
+
+            # Louisiana uses "Parish" suffix in CSV
+            if not zips and state_abbrev == "LA":
+                key = (state_abbrev, area_clean + " parish")
+                zips = zip_map.get(key, [])
+
+            # Alaska uses "Borough" suffix in CSV
+            if not zips and state_abbrev == "AK":
+                key = (state_abbrev, area_clean + " borough")
+                zips = zip_map.get(key, [])
+                if not zips:
+                    key = (state_abbrev, area_clean + " census area")
+                    zips = zip_map.get(key, [])
 
             if zips:
                 all_zips.extend(zips[:5])  # Max 5 zips per area

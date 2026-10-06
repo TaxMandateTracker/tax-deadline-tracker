@@ -16,6 +16,7 @@ import requests
 from datetime import datetime, date, timedelta
 from urllib.parse import urljoin
 import sys
+import csv
 import os
 import psycopg2
 from dotenv import load_dotenv
@@ -30,6 +31,50 @@ try:
 except ImportError:
     PdfReader = None
 
+
+# ============================================================
+# LOAD ZIP CODE MAPPING FROM CSV
+# ============================================================
+
+_ZIP_COUNTY_MAP = None
+
+def load_zip_county_map():
+    """
+    Loads the county-to-zip mapping from geo-data.csv.
+    Returns dict: {(state_abbr, county_lower): [zip1, zip2, ...]}
+    """
+    global _ZIP_COUNTY_MAP
+    if _ZIP_COUNTY_MAP is not None:
+        return _ZIP_COUNTY_MAP
+
+    _ZIP_COUNTY_MAP = {}
+    csv_path = os.path.join(
+        os.path.dirname(__file__), "geo-data.csv"
+    )
+
+    try:
+        with open(csv_path, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                state_abbr = row.get("state_abbr", "").strip().upper()
+                county     = row.get("county", "").strip().lower()
+                zipcode    = row.get("zipcode", "").strip()
+
+                if not state_abbr or not county or not zipcode:
+                    continue
+
+                key = (state_abbr, county)
+                if key not in _ZIP_COUNTY_MAP:
+                    _ZIP_COUNTY_MAP[key] = []
+                if zipcode not in _ZIP_COUNTY_MAP[key]:
+                    _ZIP_COUNTY_MAP[key].append(zipcode)
+
+        print(f"✅ Loaded zip/county map: {len(_ZIP_COUNTY_MAP)} entries")
+    except Exception as e:
+        print(f"❌ Failed to load zip/county map: {e}")
+        _ZIP_COUNTY_MAP = {}
+
+    return _ZIP_COUNTY_MAP
 
 # ============================================================
 # USER INPUT
@@ -1469,8 +1514,30 @@ def get_fema_zip_codes(state, disaster_deadline):
         if not areas:
             return None
 
-        result = ", ".join(areas)
-        return result
+        # Convert area names to zip codes using CSV mapping
+        zip_map    = load_zip_county_map()
+        all_zips   = []
+
+        for area in areas:
+            # Clean area name for lookup
+            area_clean = re.sub(
+                r'\s*\(.*?\)', '', area
+            ).strip().lower()
+
+            # Try with state abbreviation
+            key  = (state_abbrev, area_clean)
+            zips = zip_map.get(key, [])
+
+            if zips:
+                all_zips.extend(zips[:5])  # Max 5 zips per area
+
+        if all_zips:
+            # Remove duplicates and limit total
+            unique_zips = list(dict.fromkeys(all_zips))[:200]
+            return ", ".join(unique_zips)
+
+        # Fallback — return area names if no zip codes found
+        return ", ".join(areas)
 
     except Exception as e:
         return None

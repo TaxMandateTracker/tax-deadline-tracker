@@ -1290,13 +1290,30 @@ def _clean_area_list(text):
     if len(text) > 2000:
         return None
 
-    # Skip if it looks like a full sentence (too many words)
-    word_count = len(text.split())
-    if word_count > 100:
+    # Skip if it looks like a full sentence
+    # Real area lists do not contain these words
+    sentence_indicators = [
+        'qualify', 'eligible', 'taxpayer', 'business',
+        'reside', 'postpone', 'deadline', 'declaration',
+        'permits', 'filing', 'payment', 'relief',
+        'disaster area', 'the irs', 'announces',
+    ]
+    text_lower = text.lower()
+    for indicator in sentence_indicators:
+        if indicator in text_lower:
+            return None
+
+    # Skip if starts with "the" (usually a sentence fragment)
+    if text_lower.startswith('the '):
+        return None
+
+    # Skip if too many words without commas (probably a sentence)
+    words = text.split()
+    commas = text.count(',')
+    if len(words) > 8 and commas == 0:
         return None
 
     return text
-
 # ============================================================
 # EXTRACT DISASTER STATE — using known US state list
 # CHANGED: matches against US_STATES for reliable extraction

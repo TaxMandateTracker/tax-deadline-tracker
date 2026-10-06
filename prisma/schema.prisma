@@ -188,6 +188,7 @@ model TblJob {
   HolidayEligible      String?
   DisasterLocation     String?
   DisasterEligible     String?
+  DisasterZipCodes     String?
   SourceURL            String?
   ExtensionFiled       Boolean   @default(false)
   ExtensionFiledDate   DateTime?
@@ -264,7 +265,7 @@ model TblTaxCalendar {
   HolidayLocation   String?
   HolidayEligible   String    @default("No")
   DisasterLocation  String?
-  DisasterCounties  String?
+  DisasterZipCodes  String?
   DisasterName      String?
   DisasterEligible  String    @default("No")
   OriginalDeadline  DateTime?

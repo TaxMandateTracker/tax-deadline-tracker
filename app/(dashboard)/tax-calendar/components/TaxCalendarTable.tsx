@@ -15,7 +15,7 @@ interface TaxCalendarRow {
   DisasterName: string | null
   DisasterEligible: string
   DisasterLocation: string | null
-  DisasterCounties: string | null
+  DisasterZipCodes: string | null
   DisasterDeadline: string | null
   OriginalDeadline: string | null
   ExtensionDeadline: string | null
@@ -65,7 +65,7 @@ const COLUMNS: { key: SortField; label: string; width: string }[] = [
   { key: "DisasterEligible",  label: "Disaster Eligible",  width: "w-28" },
   { key: "DisasterName",      label: "Disaster Name",      width: "w-36" },
   { key: "DisasterLocation",  label: "Disaster Location",  width: "w-28" },
-  { key: "DisasterCounties",  label: "Disaster Counties",  width: "w-48" },
+  { key: "DisasterZipCodes",  label: "Disaster Zip Codes", width: "w-48" },
   { key: "DisasterDeadline",  label: "Disaster Deadline",  width: "w-32" },
   { key: "SourceType",        label: "Source Type",        width: "w-24" },
   { key: "SourceURL",         label: "Source URL",         width: "w-48" },
@@ -235,7 +235,7 @@ export default function TaxCalendarTable() {
           r.DisasterLocation?.toLowerCase().includes(q) ||
           r.StateProvince?.toLowerCase().includes(q) ||
           r.HolidayLocation?.toLowerCase().includes(q) ||
-          r.DisasterCounties?.toLowerCase().includes(q)
+          r.DisasterZipCodes?.toLowerCase().includes(q)
         )
       }
       return true
@@ -576,13 +576,13 @@ export default function TaxCalendarTable() {
                     {row.DisasterLocation ?? "—"}
                   </td>
 
-                  {/* DisasterCounties */}
+                  {/* DisasterZipCodes */}
                   <td className="px-3 py-2 text-gray-500 text-[11px] max-w-xs">
                     <span
-                      title={row.DisasterCounties ?? ""}
+                      title={row.DisasterZipCodes ?? ""}
                       className="block truncate"
                     >
-                      {row.DisasterCounties ?? "—"}
+                      {row.DisasterZipCodes ?? "—"}
                     </span>
                   </td>
 

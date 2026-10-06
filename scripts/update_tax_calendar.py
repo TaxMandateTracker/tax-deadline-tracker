@@ -1427,6 +1427,7 @@ def get_fema_zip_codes(state, disaster_deadline):
         }.get(state)
 
         if not state_abbrev:
+            print(f"   ❌ No state abbrev for: {state}")
             return None
 
         # Get year from disaster deadline
@@ -1444,6 +1445,9 @@ def get_fema_zip_codes(state, disaster_deadline):
             "&$format=json"
             "&$top=10"
         )
+        print(f"   🌐 FEMA URL: {url}")
+        response = SESSION.get(url, timeout=15)
+        print(f"   📡 FEMA status: {response.status_code}")
 
         response = SESSION.get(url, timeout=15)
         if response.status_code != 200:

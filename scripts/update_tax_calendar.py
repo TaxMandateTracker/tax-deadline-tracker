@@ -1260,7 +1260,7 @@ def extract_county_list(text):
         r"commonwealths|commonwealth)"
     )
 
-    # Pattern 0: "islands of X, Y, and Z" (NMI style)
+   # Pattern 0: "islands of X, Y, and Z" (NMI style)
     match = re.search(
         r"(?:on\s+the\s+)?(?:islands|island)\s+of\s+"
         r"([A-Za-z][A-Za-z\s,\.'\-/]+?)"

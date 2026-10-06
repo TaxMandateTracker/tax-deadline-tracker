@@ -1907,7 +1907,11 @@ def process_tax_rule(form_config, fye):
             "DisasterZipCodes":  d.get("zip_codes"),
             "DisasterDeadline":  d["extended_to"],
             "SourceType":        source_type,
-            "SourceURL":         source_url,
+            "SourceURL":         (
+                source_url + "\nDisaster relief: " + d["source_url"]
+                if source_url and d.get("source_url")
+                else source_url
+            ),
             "DisasterSourceURL": d["source_url"],
             "OriginalRule":      source_text
         })

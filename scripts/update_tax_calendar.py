@@ -1260,12 +1260,6 @@ def extract_county_list(text):
         r"commonwealths|commonwealth)"
     )
 
-    # DEBUG - remove after testing
-    if "Bavi" in text or "bavi" in text.lower():
-        import re as re2
-        bavi_match = re2.search(r"islands.{0,50}", text, re2.IGNORECASE)
-        if bavi_match:
-            print(f"   BAVI TEXT: {bavi_match.group(0)}")
 
     # Pattern 0: "on the islands of X, Y, and Z" (NMI style)
     match = re.search(

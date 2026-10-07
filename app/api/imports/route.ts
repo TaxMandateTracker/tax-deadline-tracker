@@ -194,15 +194,15 @@ export async function POST(request: Request) {
 
         const formMapped = mapFormType(formNumber)
         const taxYear    = parseTaxYear(fye)
-        const jobName    = `${clientName} - ${formMapped} - ${taxYear}`
+        const fyeDate    = parseDate(fye)
+        const fyeDateStr = fyeDate instanceof Date ? fyeDate.toISOString().split("T")[0] : String(taxYear)
+        const jobName    = `${clientName} - ${formMapped} - ${fyeDateStr}`
 
         const existingJob = await prisma.tblJob.findFirst({
           where: {
-            ClientID: clientID,
-            FormType: formMapped,
-            TaxYear:  taxYear,
-          },
-        })
+           JobName: jobName,
+         },
+      })
 
         if (existingJob) {
           results.skipped++
@@ -239,7 +239,6 @@ export async function POST(request: Request) {
           : null
 
                 // Look up deadline from TblTaxCalendar
-        const fyeDate = parseDate(fye)
         let originalDeadline  = null
         let extensionDeadline = null
 

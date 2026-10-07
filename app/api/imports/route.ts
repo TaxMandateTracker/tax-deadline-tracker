@@ -174,6 +174,10 @@ export async function POST(request: Request) {
 
           if (existing) {
             clientID = existing.ClientID
+            await prisma.tblClient.update({
+              where:  { ClientID: clientID },
+              data:   { ClientFYEDate: parseDate(fye) },
+         })
           } else {
             const country = getCountry(mapFormType(formNumber))
             const created = await prisma.tblClient.create({

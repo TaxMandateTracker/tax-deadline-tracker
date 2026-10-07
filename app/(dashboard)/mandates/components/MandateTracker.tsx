@@ -467,7 +467,7 @@ export default function MandateTracker() {
         )
 
       case "ClientFYEDate":
-        return <span className="text-gray-600">{formatDate(mandate.Client?.ClientFYEDate ?? null)}</span>
+          return <span className="text-gray-600">{formatDate(mandate.FYE ?? null)}</span>
 
       case "JobName":
         return (

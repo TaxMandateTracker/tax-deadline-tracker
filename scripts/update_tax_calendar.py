@@ -1426,6 +1426,8 @@ def extract_disaster_state(text):
         r"relief for.*?in\s+({state})",
         r"in\s+the\s+State of\s+({state})",
         r"affected by.*?in\s+({state})",
+        r"in\s+parts\s+of\s+(?:Southeast\s+|Southwest\s+|Northeast\s+|Northwest\s+)?({state})",
+        r"businesses\s+in\s+(?:parts\s+of\s+)?({state})",
     ]
 
     for state in sorted_states:
@@ -1440,8 +1442,12 @@ def extract_disaster_state(text):
     for state in sorted_states:
         escaped = re.escape(state)
         pattern = (
-            r"(?:disaster|relief|storm|hurricane|flood|"
-            r"wildfire|tornado|earthquake).*?" +
+            r"(?:disaster|storm|hurricane|flood|"
+            r"wildfire|tornado|earthquake)\s+"
+            r"(?:in|affecting|impacting|hit|struck)\s+"
+            r"(?:parts?\s+of\s+|areas?\s+of\s+|"
+            r"(?:Southeast|Southwest|Northeast|Northwest|"
+            r"Northern|Southern|Eastern|Western)\s+)?" +
             escaped
         )
         if re.search(pattern, text, re.IGNORECASE | re.DOTALL):
